@@ -4107,8 +4107,10 @@ window.addEventListener('load',()=>{
     const finalReserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; const usedIds=new Set(); let lowMode=soc<=15; let lastNoCandidate=false;
     for(let i=0;i<6;i++){
       const travelReserve=(i===0&&lowMode)?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018);
+      const remainingToFinishKm=Math.max(0,(1-progress)*distance);
+      const finishNeedKwh=remainingToFinishKm*consumption/100+finalReserve;
+      if(energy>=finishNeedKwh)break;
       const reachableKm=Math.max(0,energy-travelReserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
-      if(maxProgress>=1)break;
       let cand;
       if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,14);}
       else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,14);}
@@ -4123,7 +4125,8 @@ window.addEventListener('load',()=>{
       const segKm=(i===0&&lowMode)?Math.max(0,stop.leg1Km||stop.originDriveKm||((stop.routeProgress-progress)*distance)):Math.max(0,(stop.routeProgress-progress)*distance);
       const used=segKm*consumption/100; const arrivalEnergy=Math.max(0,energy-used);
       const remainingKm=Math.max(0,(1-Math.max(stop.routeProgress,progress+segKm/Math.max(distance,1)))*distance); const finalNeed=remainingKm*consumption/100+finalReserve;
-      const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,35)/100)):Math.min(battery,battery*Math.max(arrival+10,Math.min(target,85))/100);
+      const forcedPct=Math.min(100,Math.max(target,arrival+15,arrival>=50?95:85));
+      const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,35)/100)):Math.min(battery,battery*forcedPct/100);
       const chargeKwh=Math.max(0,chargeTo-arrivalEnergy); const kw=stKw(stop)||chargeKw||90;
       const tr=chargeTimeRange(chargeKwh,kw); stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil((tr.min+tr.max)/2),chargeMinLow:tr.min,chargeMinHigh:tr.max,chargeTimeText:tr.text,cost:chargeKwh*price,effectiveKw:kw,emergencyFirst:i===0&&lowMode});
       energy=chargeTo; progress=Math.max(stop.routeProgress||0,progress+segKm/Math.max(distance,1)); lowMode=false;
