@@ -3,6 +3,7 @@
 <head>
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
+<!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
 <!-- UFUK_ROUTE_LOGIC_SAFE_FIX_0606 -->
 <!-- UFUK_ADMIN_ACCESS_FIX_0520 -->
 <!-- UFUK_IOS_NO_STUCK_FALLBACK_0519 -->
@@ -3513,5 +3514,218 @@ window.addEventListener('load',()=>{
 })();
 
 </script>
+
+<script>
+/* UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608
+   Gerçek yol geometrisine göre rota durak seçimi.
+   Admin, alt panel, tasarım ve EPDK kayıt yapısına dokunmaz.
+   OSRM route varsa istasyonu düz çizgiye göre değil gerçek yolun üstüne/sapmasına göre seçer.
+*/
+(function(){
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608';
+
+  function q(id){return document.getElementById(id)}
+  function e(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
+  function n(v,d){const x=Number(String(v??'').replace(',','.'));return Number.isFinite(x)?x:d}
+  function hKm(a,b,c,d){
+    try{ if(typeof km==='function') return km(a,b,c,d); }catch(_){ }
+    const R=6371,toRad=x=>x*Math.PI/180; const dLat=toRad(c-a),dLon=toRad(d-b);
+    const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function val(id,def){try{return typeof routeVal==='function'?routeVal(id,def):n(q(id)?.value,def)}catch(_){return def}}
+  function stationKw(s){
+    try{ if(typeof routePowerKwDirect==='function') return routePowerKwDirect(s)||0; }catch(_){ }
+    try{ if(typeof routePowerKw==='function') return routePowerKw(s)||0; }catch(_){ }
+    const nums=[...String(s?.power||'').replace(',','.').matchAll(/\d+(\.\d+)?/g)].map(m=>parseFloat(m[0])).filter(Number.isFinite);
+    return nums.length?Math.max(...nums):0;
+  }
+  function mapsUrl(dest,stops){
+    try{ if(typeof routeGoogleDirectUrl==='function') return routeGoogleDirectUrl(dest,stops||[]); }catch(_){ }
+    const origin=`${userPos.lat},${userPos.lon}`; const destination=`${dest.lat},${dest.lon}`;
+    const waypoints=(stops||[]).slice(0,8).map(s=>`${s.lat},${s.lon}`).join('|');
+    let url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+    if(waypoints) url+=`&waypoints=${encodeURIComponent(waypoints)}`;
+    return url;
+  }
+  function setToast(msg){try{ if(typeof routeToast==='function') routeToast(msg); }catch(_){ }}
+
+  async function fetchWithTimeout(url,ms){
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms||6500);
+    try{return await fetch(url,{signal:ctl.signal,headers:{'Accept':'application/json'},cache:'no-store'});}finally{clearTimeout(t)}
+  }
+  async function getRoadRoute0608(dest){
+    const start={lat:n(userPos?.lat,40.840621),lon:n(userPos?.lon,31.152219)};
+    const key='mv_osrm_route_'+[start.lat,start.lon,dest.lat,dest.lon].map(x=>Number(x).toFixed(3)).join('_');
+    try{
+      const cached=JSON.parse(sessionStorage.getItem(key)||'null');
+      if(cached && Date.now()-cached.time<20*60*1000 && Array.isArray(cached.points)&&cached.points.length>3) return cached;
+    }catch(_){ }
+    const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=false&steps=false`;
+    try{
+      const res=await fetchWithTimeout(url,7000);
+      if(!res.ok) throw new Error('OSRM '+res.status);
+      const data=await res.json();
+      const r=data&&data.routes&&data.routes[0];
+      const coords=r&&r.geometry&&r.geometry.coordinates;
+      if(!Array.isArray(coords)||coords.length<3) throw new Error('route geometry empty');
+      const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
+      const pack={ok:true,source:'osrm-road',points,distanceKm:(Number(r.distance)||0)/1000,time:Date.now()};
+      try{sessionStorage.setItem(key,JSON.stringify(pack));}catch(_){ }
+      return pack;
+    }catch(err){
+      console.warn('OSRM rota alınamadı, sıkı fallback kullanılacak',err);
+      return {ok:false,source:'fallback-line',points:[start,{lat:n(dest.lat,39.9334),lon:n(dest.lon,32.8597)}],distanceKm:hKm(start.lat,start.lon,dest.lat,dest.lon)*1.18};
+    }
+  }
+  function routeProjection0608(points,p){
+    if(!Array.isArray(points)||points.length<2) return {distance:999,progress:0,alongKm:0};
+    let segs=[],total=0;
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1]; const len=hKm(a.lat,a.lon,b.lat,b.lon);
+      if(len>0.001){segs.push({a,b,len,cum:total}); total+=len;}
+    }
+    if(!segs.length) return {distance:999,progress:0,alongKm:0};
+    const lat0=p.lat*Math.PI/180; const kx=111.320*Math.cos(lat0), ky=110.574;
+    let best={distance:999,alongKm:0,progress:0};
+    for(const s of segs){
+      const ax=s.a.lon*kx, ay=s.a.lat*ky, bx=s.b.lon*kx, by=s.b.lat*ky, px=p.lon*kx, py=p.lat*ky;
+      const vx=bx-ax, vy=by-ay, wx=px-ax, wy=py-ay; const den=vx*vx+vy*vy||1;
+      let t=(wx*vx+wy*vy)/den; if(t<0)t=0; if(t>1)t=1;
+      const lat=s.a.lat+(s.b.lat-s.a.lat)*t, lon=s.a.lon+(s.b.lon-s.a.lon)*t;
+      const dist=hKm(p.lat,p.lon,lat,lon);
+      if(dist<best.distance) best={distance:dist,alongKm:s.cum+s.len*t,progress:Math.max(0,Math.min(1,(s.cum+s.len*t)/total))};
+    }
+    return best;
+  }
+  async function getRouteCandidates0608(dest,manualCorridor){
+    const road=await getRoadRoute0608(dest);
+    const routeKm=road.distanceKm||hKm(userPos.lat,userPos.lon,dest.lat,dest.lon)*1.18;
+    const raw=(stations||[]).map(s=>{
+      const m=routeProjection0608(road.points,s);
+      const startDistance=hKm(userPos.lat,userPos.lon,s.lat,s.lon);
+      const destDistance=hKm(s.lat,s.lon,dest.lat,dest.lon);
+      return {...s,routeDeviation:m.distance,routeProgress:m.progress,alongKm:m.alongKm,startDistance,destDistance,routeKw:stationKw(s),routeSource:road.source};
+    }).filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon)&&s.routeProgress>0.015&&s.routeProgress<0.985);
+
+    // Gerçek yol varsa sapmayı dar tut. Böylece Seben/Kartalkaya/Beypazarı gibi rota dışı yerler elenir.
+    const strict=road.ok;
+    const corridors=strict?[4,6,8,12,16]:[10,14,20,28,38];
+    let chosen=[],used=corridors[0];
+    for(const c of corridors){
+      const list=raw.filter(s=>s.routeDeviation<=c).sort((a,b)=>a.routeProgress-b.routeProgress);
+      if(list.length>chosen.length){chosen=list;used=c;}
+      if(list.length>=6){chosen=list;used=c;break;}
+    }
+    // Kullanıcı formundaki koridor büyük olsa bile gerçek yol hesabında 16 km üstüne çıkma.
+    const manual=n(manualCorridor,80);
+    if(strict && manual<used){
+      chosen=raw.filter(s=>s.routeDeviation<=manual).sort((a,b)=>a.routeProgress-b.routeProgress);
+      used=manual;
+    }
+    return {list:chosen,usedCorridor:used,routeKm,roadSource:road.source,roadOk:road.ok,all:raw};
+  }
+  function chooseStop0608(list,currentProgress,maxProgress){
+    const min=currentProgress+0.012;
+    const safeMax=Math.max(min,maxProgress-0.004);
+    const cand=(list||[]).filter(s=>s.routeProgress>min&&s.routeProgress<=safeMax);
+    if(!cand.length)return null;
+    cand.sort((a,b)=>{
+      const score=s=>{
+        const advance=(s.routeProgress-currentProgress)/Math.max(0.01,safeMax-currentProgress);
+        const progressScore=Math.min(1,Math.max(0,advance))*130;
+        const devPenalty=Math.pow(Math.max(0,s.routeDeviation),1.35)*14;
+        const powerBonus=Math.min(22,(s.routeKw||0)/7);
+        const startBackPenalty=Math.max(0,(s.startDistance||0)-(s.alongKm||0)-8)*4;
+        return progressScore-devPenalty-startBackPenalty+powerBonus;
+      };
+      return score(b)-score(a);
+    });
+    return cand[0];
+  }
+  function buildPlan0608(routeList,distance,battery,soc,arrival,target,consumption,price,chargeKw){
+    const reserve=battery*Math.max(0,arrival)/100;
+    let energy=battery*Math.max(0,soc)/100;
+    let progress=0; const stops=[];
+    const targetEnergy=battery*Math.max(arrival+8,Math.min(target,82))/100;
+    for(let i=0;i<9;i++){
+      const usable=Math.max(0,energy-reserve);
+      const reachableKm=usable/Math.max(consumption,1)*100;
+      const maxProgress=progress+(reachableKm/Math.max(distance,1));
+      if(maxProgress>=1) break;
+      const stop=chooseStop0608(routeList,progress,maxProgress);
+      if(!stop) break;
+      const segKm=Math.max(0,(stop.routeProgress-progress)*distance);
+      const used=segKm*consumption/100;
+      const arrivalEnergy=Math.max(0,energy-used);
+      const remainingKm=Math.max(0,(1-stop.routeProgress)*distance);
+      const finalNeed=remainingKm*consumption/100+reserve;
+      const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,32)/100)):Math.min(battery,targetEnergy);
+      const chargeKwh=Math.max(0,chargeTo-arrivalEnergy);
+      const kw=stationKw(stop)||chargeKw||90;
+      stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil(chargeKwh/Math.max(10,kw)*60),cost:chargeKwh*price,effectiveKw:kw});
+      energy=chargeTo; progress=stop.routeProgress;
+    }
+    return {stops,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
+  }
+
+  window.planEvRoute=async function(){
+    const out=q('routeResult');
+    try{
+      setToast('Rota gerçek yol üstünden hesaplanıyor…');
+      if(out) out.innerHTML='<div class="routeDataLoading"><b>Rota hesaplanıyor…</b><br>Gerçek yol güzergâhı ve EPDK istasyonları kontrol ediliyor.</div>';
+      let ready={ok:true,source:'memory',count:(stations||[]).length};
+      if(typeof ensureRouteStationsReady0521==='function') ready=await ensureRouteStationsReady0521();
+      else { if(typeof buildStations==='function') buildStations(); ready={ok:(stations||[]).length>0,source:'memory',count:(stations||[]).length}; }
+      if(!ready?.ok || !(stations||[]).length){
+        if(out) out.innerHTML='<div class="routeDataLoading">İstasyon verisi yüklenemedi. Lütfen Safari’de sayfayı yenileyip tekrar deneyin.</div>';
+        return;
+      }
+      if(typeof updateDataHealth0521==='function') updateDataHealth0521(ready.source||'memory',(stations||[]).length);
+      let dest;
+      try{ dest=typeof resolveRouteDestination==='function'?await resolveRouteDestination():null; }catch(_){ }
+      if(!dest){ try{dest=typeof routeDirectDestination==='function'?routeDirectDestination():routeDestination();}catch(_){dest={name:'Ankara',lat:39.9334,lon:32.8597};} }
+      const battery=val('rp_battery',60), soc=val('rp_soc',45), arrival=val('rp_arrival',10), target=val('rp_charge_target',80);
+      const mode=q('rp_mode')?.value||'manual';
+      const consumption=mode==='wltp'?val('rp_wltp',15):val('rp_manual',18);
+      const price=val('rp_price',val('rp_dc_price',10));
+      const chargeKw=val('rp_kw',val('rp_charge_kw',90));
+      const corridor=val('rp_corridor',80);
+      const pack=await getRouteCandidates0608(dest,corridor);
+      const distance=val('rp_distance',pack.routeKm);
+      const plan=buildPlan0608(pack.list,distance,battery,soc,arrival,target,consumption,price,chargeKw);
+      const energyNeed=distance*consumption/100, startEnergy=battery*soc/100, startUsable=battery*Math.max(0,(soc-arrival))/100;
+      const lowSocProblem=energyNeed>startUsable && !plan.stops.length;
+      const url=mapsUrl(dest,plan.stops);
+      let stopHtml='';
+      if(plan.stops.length){
+        stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${e(s.name)}</b><br>${e(s.address||'')}<br>Yola sapma: <b>${n(s.routeDeviation,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(n(s.routeProgress,0)*100).toFixed(0)}</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';
+      }else if(lowSocProblem){
+        stopHtml='<p class="strongWarn">Bu şarjla gerçek yol üstünde güvenli şarj durağı bulunamadı. Mevcut şarjı artır, varış rezervini düşür veya farklı hedef/ara durak dene.</p>';
+      }else{
+        stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';
+      }
+      if(out){
+        out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}">
+          <h3>Rota hazır</h3>
+          <p><b>${e(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${e(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p>
+          <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
+          <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+          <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
+          ${stopHtml}
+          <div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">Duraklı Google Haritalar rotasını aç</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div>
+          <div class="routeVersion">${ROUTE_FIX_VERSION} · ${pack.roadSource} · koridor ${pack.usedCorridor} km</div>
+        </div>`;
+      }
+      setToast('Rota hazır. Duraklar gerçek yol üstünden seçildi.');
+    }catch(err){
+      console.error(err);
+      if(out) out.innerHTML='<div class="routeWarn">Rota oluşturulamadı. Lütfen hedefi kontrol edip tekrar dene.</div>';
+      setToast('Rota oluşturulamadı');
+    }
+  };
+})();
+</script>
+
 </body>
 </html>
