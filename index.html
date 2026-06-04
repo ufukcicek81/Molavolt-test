@@ -2001,7 +2001,7 @@ function planEvRoute(){
         plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+
       `</div>`;
     }else if(lowSocProblem){
@@ -2018,7 +2018,7 @@ function planEvRoute(){
 
         <div class="routeMainSummary">
           <div><span>Durak</span><b>${plan.stops.length}</b></div>
-          <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+          <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
 
@@ -2159,7 +2159,7 @@ async function planEvRoute(){
         plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+
       `</div>`;
     }else if(lowSocProblem){
@@ -2176,7 +2176,7 @@ async function planEvRoute(){
 
         <div class="routeMainSummary">
           <div><span>Durak</span><b>${plan.stops.length}</b></div>
-          <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+          <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
 
@@ -2403,7 +2403,7 @@ async function planEvRoute(){
         plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+
       `</div>`;
     }else if(lowSocProblem){
@@ -2420,7 +2420,7 @@ async function planEvRoute(){
         ${plan.warning?`<p class="strongWarn">${esc(plan.warning)}</p>`:''}
         <div class="routeMainSummary">
           <div><span>Durak</span><b>${plan.stops.length}</b></div>
-          <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+          <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
         <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
@@ -2593,7 +2593,7 @@ async function planEvRoute(){
         plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+
       `</div>`;
     }else if(lowSocProblem){
@@ -2610,7 +2610,7 @@ async function planEvRoute(){
         ${fallbackActive?'<div class="routeStartWarn">iOS cihazda canlı EPDK verisi geciktiği için yedek rota verisiyle hesaplandı. Bağlantı düzelince gerçek EPDK verisi otomatik kullanılacaktır.</div>':''}
         <div class="routeMainSummary">
           <div><span>Durak</span><b>${plan.stops.length}</b></div>
-          <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+          <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
         <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
@@ -2909,7 +2909,7 @@ async function planEvRoute(){
         plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+
       `</div>`;
     }else if(lowSocProblem){
@@ -2924,7 +2924,7 @@ async function planEvRoute(){
         <p><b>${esc(dest.name||$('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${ready.source}</b> · İstasyon: <b>${stations.length}</b></p>
         <div class="routeMainSummary">
           <div><span>Durak</span><b>${plan.stops.length}</b></div>
-          <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+          <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
         <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
@@ -3157,7 +3157,7 @@ window.addEventListener('load',()=>{
         stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b>${s.isStartCharge?' <span class="strongWarn">(önce buraya şarj)</span>':''}<br>
           ${esc(s.address||'')}<br>
-          Sapma: <b>${safeNum(s.routeDeviation,0).toFixed(1)} km</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Sapma: <b>${safeNum(s.routeDeviation,0).toFixed(1)} km</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+'</div>';
       }else if(lowSocProblem){
         stopHtml='<p class="strongWarn">Bu şarjla güvenli rota oluşturulamadı. Mevcut şarjı artırıp tekrar dene veya varışta kalsın değerini düşür.</p>';
@@ -3172,7 +3172,7 @@ window.addEventListener('load',()=>{
           ${plan.warning?`<p class="strongWarn">${esc(plan.warning)}</p>`:''}
           <div class="routeMainSummary">
             <div><span>Durak</span><b>${plan.stops.length}</b></div>
-            <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+            <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
             <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
           </div>
           <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
@@ -3478,7 +3478,7 @@ window.addEventListener('load',()=>{
       if(plan.stops.length){
         stopHtml='<div class="routeStopPreview"><b>Yol güzergahı üstündeki önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem">
           <b>${i+1}. ${esc(s.name)}</b><br>${esc(s.address||'')}<br>
-          Rota sapması: <b>${n(s.routeDeviation,0).toFixed(1)} km</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
+          Rota sapması: <b>${n(s.routeDeviation,0).toFixed(1)} km</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>
         </div>`).join('')+'</div>';
       }else if(lowSocProblem){
         stopHtml='<p class="strongWarn">Bu şarjla güzergah üzerinde güvenli şarj durağı bulunamadı. Başlangıç şarjını artır veya varış rezervini düşür.</p>';
@@ -3491,7 +3491,7 @@ window.addEventListener('load',()=>{
           <p><b>${esc(dest.name||byId('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${esc(ready.source||'memory')}</b> · İstasyon: <b>${stations.length}</b></p>
           <div class="routeMainSummary">
             <div><span>Durak</span><b>${plan.stops.length}</b></div>
-            <div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div>
+            <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
             <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
           </div>
           <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
@@ -3699,7 +3699,7 @@ window.addEventListener('load',()=>{
       const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
       if(plan.stops.length){
-        stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${e(s.name)}</b><br>${e(s.address||'')}<br>Yola sapma: <b>${n(s.routeDeviation,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(n(s.routeProgress,0)*100).toFixed(0)}</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';
+        stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${e(s.name)}</b><br>${e(s.address||'')}<br>Yola sapma: <b>${n(s.routeDeviation,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(n(s.routeProgress,0)*100).toFixed(0)}</b> · Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';
       }else if(lowSocProblem){
         stopHtml='<p class="strongWarn">Bu şarjla gerçek yol üstünde güvenli şarj durağı bulunamadı. Mevcut şarjı artır, varış rezervini düşür veya farklı hedef/ara durak dene.</p>';
       }else{
@@ -3709,7 +3709,7 @@ window.addEventListener('load',()=>{
         out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}">
           <h3>Rota hazır</h3>
           <p><b>${e(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${e(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p>
-          <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
+          <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
           <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
@@ -3891,7 +3891,7 @@ window.addEventListener('load',()=>{
       const lowSocProblem=energyNeed>startUsable && !plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
       if(plan.stops.length){
-        stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b><br>${safeEsc(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b> · Ek rota: <b>${num(s.sameDirection?.detourKm,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(num(s.routeProgress,0)*100).toFixed(0)}</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';
+        stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b><br>${safeEsc(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b> · Ek rota: <b>${num(s.sameDirection?.detourKm,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(num(s.routeProgress,0)*100).toFixed(0)}</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';
       }else if(lowSocProblem){
         stopHtml='<p class="strongWarn">Bu şarjla gidiş istikametinde, sapmasız uygun şarj durağı bulunamadı. Sistem ters yön/karşı şerit duraklarını bilinçli olarak elemedi.</p>';
       }else{
@@ -3901,7 +3901,7 @@ window.addEventListener('load',()=>{
         out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}">
           <h3>Rota hazır</h3>
           <p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${safeEsc(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p>
-          <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
+          <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
           <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
@@ -3918,13 +3918,13 @@ window.addEventListener('load',()=>{
 
 
 <script>
-/* UFUK_ROUTE_VERCEL_OSRM_FAST_CLEAN_0615
+/* UFUK_ROUTE_TIME_RANGE_FIX_0617
    Vercel OSRM API destekli hızlı rota kontrolü.
    Amaç: gidiş yönünde rota dışı durakları elemek, kullanıcıya teknik detay göstermemek.
    Admin, alt panel, tasarım ve EPDK yapısına dokunmaz.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_ROUTE_VERCEL_OSRM_FAST_CLEAN_0615';
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_TIME_RANGE_FIX_0617';
   const DEFAULT_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function routeApiUrl(){return (localStorage.getItem('molavolt_route_check_api')||DEFAULT_API).trim()}
@@ -4005,14 +4005,14 @@ window.addEventListener('load',()=>{
       const pack=await preCandidates(dest); const distance=val('rp_distance',pack.baseKm); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw);
       const energyNeed=distance*consumption/100,startEnergy=battery*soc/100,startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
-      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b><br>${safeEsc(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';}
+      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b><br>${safeEsc(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';}
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş yönünde güvenli şarj durağı bulunamadı. Lütfen en yakın güvenli noktaya yönlenmeden önce şarj durumunu kontrol et.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       let actionLabel='Google Haritalar’da hedef rotasını aç';
       if(plan.stops.length) actionLabel='Duraklı Google Haritalar rotasını aç';
       if(lowSocProblem) actionLabel='Hedef rotasını aç';
       const apiLabel=(plan.provider&&plan.provider!=='api-yok')?plan.provider:(lowSocProblem?'uygun aday yok':'kontrol gerekmedi');
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML=`<div class="routeWarn">Rota kontrolü şu anda cevap vermedi. Lütfen tekrar dene.</div>`; toast('Rota kontrolü cevap vermedi');}
   };
@@ -4033,6 +4033,28 @@ window.addEventListener('load',()=>{
   function routeApiUrl(){return (localStorage.getItem('molavolt_route_check_api')||DEFAULT_API).trim()}
   function safeEsc(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
   function num(v,d){const x=Number(String(v??'').replace(',','.'));return Number.isFinite(x)?x:d}
+  function chargeTimeRange(kwh,kw){
+    kwh=Math.max(0,Number(kwh)||0); kw=Math.max(0,Number(kw)||0);
+    if(kwh<=0)return {min:0,max:0,text:'0 dk'};
+    let avg;
+    if(kw<=22) avg=Math.max(7,kw*0.72);
+    else if(kw<=60) avg=kw*0.62;
+    else if(kw<=120) avg=kw*0.55;
+    else if(kw<=180) avg=kw*0.48;
+    else avg=Math.min(150,kw*0.42);
+    avg=Math.max(10,avg||45);
+    const base=(kwh/avg)*60;
+    let mn=Math.max(5,Math.floor((base*0.85)/5)*5);
+    let mx=Math.max(mn+5,Math.ceil((base*1.30+4)/5)*5);
+    if(kwh<6){mn=Math.max(5,Math.floor((base*0.8)/5)*5); mx=Math.max(mn+5,Math.ceil((base*1.4+3)/5)*5);}
+    return {min:mn,max:mx,text:mn+'-'+mx+' dk'};
+  }
+  function totalTimeRange(stops){
+    const mn=(stops||[]).reduce((a,s)=>a+(Number(s.chargeMinLow)||0),0);
+    const mx=(stops||[]).reduce((a,s)=>a+(Number(s.chargeMinHigh)||0),0);
+    if(mx<=0)return '0 dk';
+    return mn+'-'+mx+' dk';
+  }
   function val(id,def){try{return typeof routeVal==='function'?routeVal(id,def):num(q(id)?.value,def)}catch(_){return def}}
   function toast(msg){try{ if(typeof routeToast==='function') routeToast(msg); }catch(_){}}
   function hKm(a,b,c,d){try{if(typeof km==='function')return km(a,b,c,d)}catch(_){} const R=6371,toRad=x=>x*Math.PI/180; const dLat=toRad(c-a),dLon=toRad(d-b); const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
@@ -4103,10 +4125,10 @@ window.addEventListener('load',()=>{
       const remainingKm=Math.max(0,(1-Math.max(stop.routeProgress,progress+segKm/Math.max(distance,1)))*distance); const finalNeed=remainingKm*consumption/100+finalReserve;
       const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,35)/100)):Math.min(battery,battery*Math.max(arrival+10,Math.min(target,85))/100);
       const chargeKwh=Math.max(0,chargeTo-arrivalEnergy); const kw=stKw(stop)||chargeKw||90;
-      stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil(chargeKwh/Math.max(10,kw)*60),cost:chargeKwh*price,effectiveKw:kw,emergencyFirst:i===0&&lowMode});
+      const tr=chargeTimeRange(chargeKwh,kw); stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil((tr.min+tr.max)/2),chargeMinLow:tr.min,chargeMinHigh:tr.max,chargeTimeText:tr.text,cost:chargeKwh*price,effectiveKw:kw,emergencyFirst:i===0&&lowMode});
       energy=chargeTo; progress=Math.max(stop.routeProgress||0,progress+segKm/Math.max(distance,1)); lowMode=false;
     }
-    return {stops,lastNoCandidate,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
+    return {stops,lastNoCandidate,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalTimeText:totalTimeRange(stops),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
   window.planEvRoute=async function(){
     const out=q('routeResult');
@@ -4123,11 +4145,11 @@ window.addEventListener('load',()=>{
       const pack=await preCandidates(dest,firstReach,soc<=15); const distance=val('rp_distance',pack.baseKm); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw);
       const energyNeed=distance*consumption/100; const lowSocProblem=energyNeed>startEnergy&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
-      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b>${s.emergencyFirst?' <span class="statusPill warn">Acil ilk durak</span>':''}<br>${safeEsc(s.address||'')}<br>${s.routeDeviation!=null?'Yola sapma: <b>'+num(s.routeDeviation,0).toFixed(1)+' km</b><br>':''}Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';}
+      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b>${s.emergencyFirst?' <span class="statusPill warn">Acil ilk durak</span>':''}<br>${safeEsc(s.address||'')}<br>${s.routeDeviation!=null?'Yola sapma: <b>'+num(s.routeDeviation,0).toFixed(1)+' km</b><br>':''}Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';}
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla güvenli ilk şarj durağı bulunamadı. En yakın şarj noktasına ayrı rota alıp şarj durumunu kontrol etmelisin.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç';
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML=`<div class="routeWarn">Rota hesaplama şu anda cevap vermedi. Lütfen tekrar dene.</div>`; toast('Rota hesaplama cevap vermedi');}
   };
