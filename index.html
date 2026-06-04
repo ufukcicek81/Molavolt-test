@@ -3863,7 +3863,7 @@ window.addEventListener('load',()=>{
       const stop=await chooseStop(list,dest,baseKm,progress,maxProgress);
       if(!stop) break;
       const segKm=Math.max(0,(stop.routeProgress-progress)*distance); const used=segKm*consumption/100; const arrivalEnergy=Math.max(0,energy-used);
-      const remainingKm=Math.max(0,(1-stop.routeProgress)*distance); const finalNeed=remainingKm*consumption/100+reserve;
+      const remainingKm=Math.max(0,(1-stop.routeProgress)*distance); const finalNeed=remainingKm*consumption/100+finalReserve;
       const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,32)/100)):Math.min(battery,targetEnergy);
       const chargeKwh=Math.max(0,chargeTo-arrivalEnergy); const kw=stKw(stop)||chargeKw||90;
       stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil(chargeKwh/Math.max(10,kw)*60),cost:chargeKwh*price,effectiveKw:kw});
@@ -3918,13 +3918,13 @@ window.addEventListener('load',()=>{
 
 
 <script>
-/* UFUK_ROUTE_VERCEL_OSRM_FREE_FIX_0611
+/* UFUK_ROUTE_VERCEL_OSRM_FREE_FIX_0613
    Vercel API destekli rota kontrolü. Google Routes API server tarafında çalışır.
    Amaç: Google Haritalar'ın gerçekten dönüş yaptırdığı/karşı şeritte kalan durakları elemek.
    Admin, alt panel, tasarım ve EPDK yapısına dokunmaz.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_ROUTE_VERCEL_OSRM_FREE_FIX_0611';
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_VERCEL_OSRM_FREE_FIX_0613';
   const DEFAULT_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function routeApiUrl(){return (localStorage.getItem('molavolt_route_check_api')||DEFAULT_API).trim()}
@@ -3971,9 +3971,9 @@ window.addEventListener('load',()=>{
     return await fetchJson(routeApiUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},25000);
   }
   async function buildPlan(list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw){
-    const reserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; let provider='api-yok', rejectedCount=0;
+    const finalReserve=battery*Math.max(0,arrival)/100; const travelReserve=Math.max(1.2,battery*0.02); let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; let provider='api-yok', rejectedCount=0;
     for(let i=0;i<6;i++){
-      const reachableKm=Math.max(0,energy-reserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
+      const reachableKm=Math.max(0,energy-travelReserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
       if(maxProgress>=1)break;
       let cand=list.filter(s=>s.routeProgress>progress+0.012&&s.routeProgress<=maxProgress-0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*180)-Math.pow(Math.max(0,s.routeDeviation),1.6)*45+Math.min(20,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,18);
       if(!cand.length)break;
@@ -3983,7 +3983,7 @@ window.addEventListener('load',()=>{
       accepted.sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*150)-Math.max(0,s.extraKm||0)*130-Math.pow(Math.max(0,s.routeDeviation||0),1.4)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);});
       const stop={...accepted[0]};
       const segKm=Math.max(0,(stop.routeProgress-progress)*distance); const used=segKm*consumption/100; const arrivalEnergy=Math.max(0,energy-used);
-      const remainingKm=Math.max(0,(1-stop.routeProgress)*distance); const finalNeed=remainingKm*consumption/100+reserve;
+      const remainingKm=Math.max(0,(1-stop.routeProgress)*distance); const finalNeed=remainingKm*consumption/100+finalReserve;
       const chargeTo=finalNeed<=battery?Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,32)/100)):Math.min(battery,battery*Math.max(arrival+8,Math.min(target,82))/100);
       const chargeKwh=Math.max(0,chargeTo-arrivalEnergy); const kw=stKw(stop)||chargeKw||90;
       stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeKwh,chargeMin:Math.ceil(chargeKwh/Math.max(10,kw)*60),cost:chargeKwh*price,effectiveKw:kw});
@@ -3995,7 +3995,7 @@ window.addEventListener('load',()=>{
     const out=q('routeResult');
     try{
       toast('Vercel API ile rota kontrol ediliyor…');
-      if(out)out.innerHTML='<div class="routeDataLoading"><b>Rota hesaplanıyor…</b><br>Google/Vercel API ile ters yön ve karşı şerit kontrolü yapılıyor.</div>';
+      if(out)out.innerHTML='<div class="routeDataLoading"><b>Rota hesaplanıyor…</b><br>Ücretsiz OSRM/Vercel API ile rota kontrolü yapılıyor.</div>';
       let ready={ok:true,source:'memory',count:(stations||[]).length};
       if(typeof ensureRouteStationsReady0521==='function') ready=await ensureRouteStationsReady0521(); else {if(typeof buildStations==='function')buildStations(); ready={ok:(stations||[]).length>0,source:'memory',count:(stations||[]).length};}
       if(!ready?.ok||!(stations||[]).length){if(out)out.innerHTML='<div class="routeDataLoading">İstasyon verisi yüklenemedi. Safari’de sayfayı yenileyip tekrar deneyin.</div>'; return;}
@@ -4003,13 +4003,17 @@ window.addEventListener('load',()=>{
       let dest=null; try{dest=typeof resolveRouteDestination==='function'?await resolveRouteDestination():null}catch(_){} if(!dest){try{dest=typeof routeDirectDestination==='function'?routeDirectDestination():routeDestination()}catch(_){dest={name:q('rp_dest')?.value||'Ankara',lat:39.9334,lon:32.8597}}}
       const battery=val('rp_battery',60),soc=val('rp_soc',45),arrival=val('rp_arrival',10),target=val('rp_charge_target',80); const mode=q('rp_mode')?.value||'manual'; const consumption=mode==='wltp'?val('rp_wltp',15):val('rp_manual',18); const price=val('rp_price',val('rp_dc_price',10)),chargeKw=val('rp_kw',val('rp_charge_kw',90));
       const pack=await preCandidates(dest); const distance=val('rp_distance',pack.baseKm); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw);
-      const energyNeed=distance*consumption/100,startEnergy=battery*soc/100,startUsable=battery*Math.max(0,(soc-arrival))/100; const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
+      const energyNeed=distance*consumption/100,startEnergy=battery*soc/100,startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
       if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${safeEsc(s.name)}</b><br>${safeEsc(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b> · Google ek rota: <b>${num(s.extraKm,0).toFixed(1)} km</b> · Rota ilerleme: <b>%${(num(s.routeProgress,0)*100).toFixed(0)}</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeMin} dk</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b></div>`).join('')+'</div>';}
-      else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş istikametinde, Google/Vercel kontrolünden geçen uygun şarj durağı bulunamadı. Sistem ters yön durak önermedi.</p>';}
+      else if(lowSocProblem){stopHtml='<p class="strongWarn">Gidiş istikametinde OSRM/Vercel kontrolünden geçen şarj durağı bulunamadı. Rota üstü adaylar fazla sapma/geri dönüş nedeniyle elendi.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri: <b>${safeEsc(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">Duraklı Google Haritalar rotasını aç</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion">${ROUTE_FIX_VERSION} · API: ${safeEsc(plan.provider)} · aday: ${pack.list.length} · elenen: ${plan.rejectedCount} · ${safeEsc(routeApiUrl())}</div></div>`;}
-      toast('Rota hazır. Vercel API ile ters yönler elendi.');
+      let actionLabel='Google Haritalar’da hedef rotasını aç';
+      if(plan.stops.length) actionLabel='Duraklı Google Haritalar rotasını aç';
+      if(lowSocProblem) actionLabel='Hedef rotasını aç';
+      const apiLabel=(plan.provider&&plan.provider!=='api-yok')?plan.provider:(lowSocProblem?'uygun aday yok':'kontrol gerekmedi');
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri: <b>${safeEsc(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${Math.ceil(plan.totalMin)} dk</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b> · İlk erişim enerjisi: <b>${startUsable.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion">${ROUTE_FIX_VERSION} · API: ${safeEsc(apiLabel)} · aday: ${pack.list.length} · elenen: ${plan.rejectedCount} · ${safeEsc(routeApiUrl())}</div></div>`;}
+      toast('Rota hazır. OSRM/Vercel kontrolü tamamlandı.');
     }catch(err){console.error(err); if(out)out.innerHTML=`<div class="routeWarn">Ücretsiz OSRM Vercel rota API çalışmadı veya URL hatalı.<br><br>API URL: <b>${safeEsc(routeApiUrl())}</b><br><br>Vercel deploy linkini aldıktan sonra tarayıcı konsolunda şunu çalıştır:<br><code>setMolaVoltRouteApi('https://SENIN-PROJEN.vercel.app/api/route-check')</code></div>`; toast('Vercel rota API çalışmadı');}
   };
 })();
