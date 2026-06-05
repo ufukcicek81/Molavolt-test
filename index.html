@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<!-- UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -576,6 +577,51 @@ body:not(.admin-mode) .adminEmergencyBar{display:block}
 }
 @media(max-width:380px){.locFixPanel{grid-template-columns:1fr}}
 
+
+/* UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619 */
+.sponsorHomeSection{margin-top:12px!important}
+.sponsorHomeSection h3{font-size:20px!important;margin:0 0 3px!important;line-height:1.15!important}
+.sponsorHomeSection>p.muted{font-size:12px!important;line-height:1.25!important;margin:0 0 4px!important}
+.sponsorHomeSection .sponsorWrap{margin-top:6px!important;overflow:hidden!important}
+.sponsorHomeSection .sponsorScroll{gap:10px!important;padding:0 0 4px!important;margin-top:0!important}
+.sponsorHomeSection .sponsorCard{
+  min-height:148px!important;
+  padding:11px 12px!important;
+  border-radius:19px!important;
+  flex:0 0 76%!important;
+  min-width:76%!important;
+  max-width:76%!important;
+  justify-content:flex-start!important;
+  overflow:visible!important;
+}
+.sponsorHomeSection .sponsorHead{min-height:48px!important;gap:10px!important;align-items:center!important}
+.sponsorHomeSection .gift,.sponsorHomeSection .sponsorLogo{width:42px!important;height:42px!important;border-radius:15px!important;font-size:22px!important;flex:0 0 42px!important}
+.sponsorHomeSection .tag.g{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:24px!important;
+  padding:5px 10px!important;
+  line-height:1.05!important;
+  font-size:12px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+.sponsorHomeSection .sponsorCard h4{font-size:16px!important;line-height:1.15!important;min-height:0!important;margin:6px 0 4px!important;-webkit-line-clamp:1!important}
+.sponsorHomeSection .sponsorCard p{font-size:12.5px!important;line-height:1.25!important;min-height:0!important;margin:2px 0 8px!important;-webkit-line-clamp:2!important}
+.sponsorHomeSection .couponBtn{margin-top:6px!important;padding:9px 10px!important;min-height:38px!important;font-size:13.5px!important;border-radius:16px!important}
+.sponsorHomeSection .smallInfo{display:none!important}
+.sponsorHomeSection .sponsorDots{margin-top:3px!important}
+.sponsorHomeSection .sponsorDot{width:6px!important;height:6px!important}
+#locFixPanel0521,.locFixPanel{display:none!important}
+@supports (-webkit-touch-callout:none){
+  .sponsorHomeSection .sponsorScroll .sponsorCard{
+    flex-basis:calc(72vw - 22px)!important;
+    min-width:calc(72vw - 22px)!important;
+    max-width:calc(72vw - 22px)!important;
+  }
+}
+
 </style>
  <link rel="manifest" href="manifest.json?v=0607">
   <meta name="theme-color" content="#07111d">
@@ -594,8 +640,8 @@ body:not(.admin-mode) .adminEmergencyBar{display:block}
     <div class="search"><span>🔎</span><input id="searchInput" placeholder="Konum veya istasyon ara" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="stableSearch()" onkeyup="stableSearch()" onchange="stableSearch()"><button class="menuBtn" onclick="openModal('infoModal')">≡</button></div>
     <div class="chips" id="brandChips"></div>
     <div class="tab active" id="tab-home">
-      <section class="section"><h3>Şarj molası fırsatları</h3><p class="muted">Kodu al, kasada göster, indirim kazan</p><div class="sponsorWrap"><div class="sponsorScroll" id="sponsorCards"></div></div><div class="sponsorDots" id="sponsorDots"></div></section>
-      <section class="section"><h3>Yakındaki istasyonlar</h3><p class="muted" id="countText">Yakındaki istasyonlar</p><p class="muted" id="locStatus" style="font-size:13px;margin-top:4px">Konumuna yakın istasyonları görmek için arama yapabilir veya konum izni verebilirsin.</p><div class="sorts"><button id="sortDistance" class="sort active" onclick="setSort('distance')">En yakın</button><button id="sortName" class="sort" onclick="setSort('name')">A-Z</button></div><div class="cards" id="homeCards"></div></section>
+      <section class="section sponsorHomeSection"><h3>Şarj molası fırsatları</h3><p class="muted">Kodu al, kasada göster, indirim kazan</p><div class="sponsorWrap"><div class="sponsorScroll" id="sponsorCards"></div></div><div class="sponsorDots" id="sponsorDots"></div></section>
+      <section class="section"><h3>Yakındaki istasyonlar</h3><p class="muted" id="countText">Yakındaki istasyonlar</p><p class="muted" id="locStatus" style="font-size:13px;margin-top:4px">Yakındaki istasyonlar konumuna göre sıralanır.</p><div class="sorts"><button id="sortDistance" class="sort active" onclick="setSort('distance')">En yakın</button><button id="sortName" class="sort" onclick="setSort('name')">A-Z</button></div><div class="cards" id="homeCards"></div></section>
     </div>
     <div class="tab" id="tab-stations"><section class="section"><h3>İstasyonlar</h3><p class="muted">Marka seçerek veya arama yaparak filtreleyebilirsin.</p><div class="cards" id="stationCards"></div></section></div>
 
@@ -2828,7 +2874,7 @@ function requestLocation0521(force=false){
   const timer=setTimeout(()=>{
     if(finished)return;
     finished=true;
-    done('Konum cevabı gecikti; varsayılan/son konumla devam ediliyor. Konum için “Konum izni ver”e bas.');
+    done('Konum cevabı gecikti; varsayılan/son konumla devam ediliyor.');
   },7000);
   navigator.geolocation.getCurrentPosition(pos=>{
     if(finished)return;
@@ -2840,18 +2886,15 @@ function requestLocation0521(force=false){
     if(finished)return;
     finished=true; clearTimeout(timer);
     let msg='Konum alınamadı; varsayılan/son konumla devam ediliyor.';
-    if(err && err.code===1) msg='Konum izni kapalı. iPhone’da Safari > Konum > İzin ver yapıp tekrar deneyin.';
+    if(err && err.code===1) msg='Konum izni kapalı. iPhone’da Safari ayarlarından konumu açıp sayfayı yenileyin.';
     done(msg);
   },{enableHighAccuracy:false,timeout:6500,maximumAge:600000});
 }
 function addLocationButtons0521(){
-  const loc=document.getElementById('locStatus');
-  if(!loc || document.getElementById('locFixPanel0521'))return;
-  loc.insertAdjacentHTML('afterend',`<div id="locFixPanel0521" class="locFixPanel">
-    <button onclick="requestLocation0521(true)">Konum izni ver</button>
-    <button onclick="userPos={lat:40.840621,lon:31.152219};savePos(userPos);buildStations();applyFilters();setLocStatus('Düzce başlangıç kabul edildi.');">Düzce ile devam</button>
-  </div>`);
+  /* UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619: Konum/Düzce butonları kaldırıldı. */
+  return;
 }
+
 function locateSort(){
   buildStations();
   applyFilters();
