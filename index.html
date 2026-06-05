@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<!-- UFUK_SPONSOR_PACKAGE_PRICE_AND_OFFER_COUNT_FIX_0625 -->
+<!-- UFUK_SPONSOR_CARI_PACKAGES_0624 -->
 <!-- UFUK_ADMIN_EMERGENCY_FLASH_HIDE_0620 -->
 <!-- UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619 -->
 <!-- UFUK_ADMIN_EASY_LOGIN_0621 -->
@@ -678,6 +680,43 @@ body:not(.admin-mode) #adminEmergencyBar0520{
   overflow:hidden!important;
 }
 
+
+/* UFUK_SPONSOR_CARI_PACKAGES_0624 */
+.sponsorFinanceGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+.sponsorPackageGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.packageCard{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:18px;padding:11px;min-height:120px}
+.packageCard.gold{border-color:rgba(255,224,129,.35);background:rgba(255,224,129,.08)}
+.packageCard.silver{border-color:rgba(170,190,210,.30);background:rgba(170,190,210,.07)}
+.packageCard.bronze{border-color:rgba(205,127,50,.30);background:rgba(205,127,50,.07)}
+.packageCard b{display:block;font-size:15px;margin-bottom:5px}
+.packageCard small{display:block;color:var(--muted);line-height:1.35;font-size:11px}
+.packageCard .fee{font-size:18px;font-weight:900;color:var(--green);margin:5px 0}
+.cariRow{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:20px;padding:13px;margin-top:10px}
+.cariRow h4{margin:0 0 6px;font-size:18px}
+.cariMini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.cariBox{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);border-radius:14px;padding:9px}
+.cariBox span{display:block;color:var(--muted);font-size:11px}.cariBox b{display:block;margin-top:3px;font-size:15px}
+.packagePill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;border:1px solid var(--line);background:rgba(255,255,255,.05)}
+.packagePill.gold{background:rgba(255,224,129,.13);border-color:rgba(255,224,129,.28);color:#ffe9a6}
+.packagePill.silver{background:rgba(170,190,210,.13);border-color:rgba(170,190,210,.25);color:#dcecff}
+.packagePill.bronze{background:rgba(205,127,50,.13);border-color:rgba(205,127,50,.25);color:#ffd2a0}
+.cariActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cariActions button,.cariActions a{width:100%;display:block;text-align:center}
+.adminTabBtn.cariTab{font-size:12px}
+@media(max-width:390px){.sponsorPackageGrid,.cariMini,.cariActions{grid-template-columns:1fr}.adminTabs{grid-template-columns:1fr 1fr!important}}
+
+
+/* UFUK_SPONSOR_PACKAGE_PRICE_AND_OFFER_COUNT_FIX_0625 */
+.stationOfferCountBadge{
+  display:inline-flex!important;align-items:center;justify-content:center;gap:4px;
+  border:1px solid rgba(255,224,129,.28)!important;
+  background:rgba(255,224,129,.12)!important;
+  color:#ffe9a6!important;border-radius:999px!important;
+  padding:6px 10px!important;font-size:12px!important;font-weight:900!important;
+  white-space:nowrap!important;line-height:1.1!important;
+}
+.stationOfferMetric{font-weight:900!important;color:#ffe9a6!important}
+
 </style>
  <link rel="manifest" href="manifest.json?v=0607">
   <meta name="theme-color" content="#07111d">
@@ -1185,13 +1224,14 @@ function offerCount(id){
 }
 function stationCard(s){
   const offers=offerCount(s.id);
+  const offerBadge=offers>0?`<span class="stationOfferCountBadge">🎁 ${offers} fırsat</span>`:'';
   return `<div class="station" onclick="openDetail('${esc(s.id)}')">
     <div class="stationTop">
       <div>
         <div class="tags">
           <span class="tag g">${esc(s.brand)}</span>
           <span class="tag b">${esc(s.status)}</span>
-          ${offers?`<span class="tag y">🎁 ${offers} fırsat</span>`:''}
+          ${offerBadge}
         </div>
         <h4>${esc(s.name)}</h4>
         <p>${esc(s.address)}</p>
@@ -1203,7 +1243,7 @@ function stationCard(s){
     </div>
     <div class="metrics">
       <span>${esc(s.power||'kW bilgisi yok')}</span>
-      <span>${offers} fırsat</span>
+      <span class="stationOfferMetric">${offers>0 ? (offers+' fırsat') : 'Fırsat yok'}</span>
     </div>
     <div class="cardActions">
       <button type="button" class="mapShowBtn" onclick="openStationMap('${esc(s.id)}',event)">Haritada gör</button>
@@ -4345,5 +4385,101 @@ window.addEventListener('load',()=>{
   setTimeout(hideHomeStatusTexts, 1200);
 })();
 </script>
+
+<script>
+/* UFUK_SPONSOR_CARI_PACKAGES_0624 */
+(function(){
+  const CARI_KEY='mv_sponsor_cari_accounts_v1';
+  const PACKAGES={
+    bronz:{id:'bronz',name:'Bronz',fee:1000,rank:1,cls:'bronze',emoji:'🥉',features:['Aylık sponsor kartı','Standart görünürlük','Fırsat kodu takibi']},
+    gumus:{id:'gumus',name:'Gümüş',fee:2000,rank:2,cls:'silver',emoji:'🥈',features:['Bronz özellikleri','Daha sık gösterim','Rapor önceliği']},
+    altin:{id:'altin',name:'Altın',fee:3000,rank:3,cls:'gold',emoji:'🥇',features:['En yüksek öncelik','Ana fırsatlarda üst sıralama','Detaylı aylık rapor']}
+  };
+  function byId(id){return document.getElementById(id)}
+  function safe(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+  function money(n){return (Number(n)||0).toLocaleString('tr-TR')+' TL'}
+  function today(){return new Date().toISOString().slice(0,10)}
+  function addMonths(d,m){const x=new Date(d||Date.now()); x.setMonth(x.getMonth()+m); return x.toISOString().slice(0,10)}
+  function getCari(){try{return JSON.parse(localStorage.getItem(CARI_KEY)||'[]')}catch(e){return []}}
+  function setCari(v){localStorage.setItem(CARI_KEY,JSON.stringify(v||[]))}
+  function pkg(id){return PACKAGES[id]||PACKAGES.bronz}
+  function packagePill(id){const p=pkg(id);return `<span class="packagePill ${p.cls}">${p.emoji} ${p.name}</span>`}
+  window.mvSponsorPackages=PACKAGES;
+  window.sponsorCariAccounts=getCari;
+
+  function ensurePackageInput(){
+    const discount=byId('sp_discount'); if(!discount||byId('sp_package'))return;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<label>Sponsor paketi</label><select id="sp_package" onchange="if(this.value&&document.getElementById('sc_package')){document.getElementById('sc_package').value=this.value;window.updateCariFee&&window.updateCariFee();}"><option value="bronz">Bronz · 1.000 TL/ay</option><option value="gumus">Gümüş · 2.000 TL/ay</option><option value="altin">Altın · 3.000 TL/ay</option></select>`;
+    discount.insertAdjacentElement('afterend',wrap);
+  }
+  function ensureCariUI(){
+    const tabs=document.querySelector('.adminTabs');
+    if(tabs&&!byId('adminTab-cari')){
+      const b=document.createElement('button'); b.className='adminTabBtn cariTab'; b.id='adminTab-cari'; b.textContent='Sponsor Cari'; b.onclick=function(){showAdminTab('cari'); renderSponsorCari();}; tabs.appendChild(b);
+    }
+    const adminPage=byId('adminPage');
+    if(adminPage&&!byId('adminSection-cari')){
+      const sec=document.createElement('section'); sec.className='adminSection'; sec.id='adminSection-cari';
+      sec.innerHTML=`
+        <div class="panel">
+          <h3>Sponsor paketleri</h3>
+          <p class="muted">Paket fiyatları başlangıç için 1.000 TL ile 3.000 TL arasında ayarlandı. Altın üyeler fırsat kartlarında öncelikli gösterilir.</p>
+          <div class="sponsorPackageGrid">
+            <div class="packageCard bronze"><b>🥉 Bronz</b><div class="fee">1.000 TL/ay</div><small>Standart fırsat kartı · Fırsat kodu · Basit rapor</small></div>
+            <div class="packageCard silver"><b>🥈 Gümüş</b><div class="fee">2.000 TL/ay</div><small>Daha sık gösterim · Rapor önceliği · Sponsor takip</small></div>
+            <div class="packageCard gold"><b>🥇 Altın</b><div class="fee">3.000 TL/ay</div><small>En üst öncelik · Ana fırsatlarda öne çıkarma · Detaylı rapor</small></div>
+          </div>
+        </div>
+        <div class="panel formBox" style="margin-top:12px">
+          <h3>Sponsor cari kaydı</h3>
+          <input id="sc_id" type="hidden">
+          <label>Firma adı</label><input id="sc_name" placeholder="Rapido Car Garage">
+          <label>Paket</label><select id="sc_package" onchange="updateCariFee()"><option value="bronz">Bronz · 1.000 TL/ay</option><option value="gumus">Gümüş · 2.000 TL/ay</option><option value="altin">Altın · 3.000 TL/ay</option></select>
+          <div class="routeMiniGrid"><div><label>Başlama tarihi</label><input id="sc_start" type="date"></div><div><label>Bitiş tarihi</label><input id="sc_end" type="date"></div></div>
+          <div class="routeMiniGrid"><div><label>Aylık ücret</label><input id="sc_fee" type="number" inputmode="decimal" placeholder="1000"></div><div><label>Tahsil edilen</label><input id="sc_paid" type="number" inputmode="decimal" placeholder="0"></div></div>
+          <label>Tahsil durumu</label><select id="sc_status"><option value="bekliyor">Bekliyor</option><option value="kismi">Kısmi tahsilat</option><option value="odendi">Tahsil edildi</option></select>
+          <div class="routeMiniGrid"><div><label>WhatsApp</label><input id="sc_whatsapp" placeholder="905327664404"></div><div><label>E-posta</label><input id="sc_email" placeholder="firma@mail.com"></div></div>
+          <label>Not</label><textarea id="sc_note" placeholder="Anlaşma notu, ödeme açıklaması, özel şartlar"></textarea>
+          <button class="primaryBtn" style="width:100%;margin-top:8px" onclick="saveSponsorCari()">Cari kaydı kaydet</button>
+          <button class="secondaryBtn" style="display:block;text-align:center;margin-top:8px" onclick="clearSponsorCariForm()">Formu temizle</button>
+        </div>
+        <section class="section"><h3>Sponsor carileri</h3><div class="cards" id="sponsorCariList"></div></section>`;
+      adminPage.appendChild(sec);
+    }
+    ensurePackageInput();
+  }
+  window.updateCariFee=function(){const p=pkg(byId('sc_package')?.value); if(byId('sc_fee'))byId('sc_fee').value=p.fee;}
+  window.clearSponsorCariForm=function(){['sc_id','sc_name','sc_paid','sc_whatsapp','sc_email','sc_note'].forEach(id=>{if(byId(id))byId(id).value=''}); if(byId('sc_package'))byId('sc_package').value='bronz'; if(byId('sc_start'))byId('sc_start').value=today(); if(byId('sc_end'))byId('sc_end').value=addMonths(Date.now(),1); if(byId('sc_status'))byId('sc_status').value='bekliyor'; updateCariFee();}
+  window.saveSponsorCari=function(){
+    const id=byId('sc_id')?.value||'cari-'+Date.now(); const p=pkg(byId('sc_package')?.value);
+    const obj={id,name:byId('sc_name')?.value||'Sponsor firma',packageId:p.id,start:byId('sc_start')?.value||today(),end:byId('sc_end')?.value||addMonths(Date.now(),1),monthlyFee:Number(byId('sc_fee')?.value||p.fee),paidAmount:Number(byId('sc_paid')?.value||0),status:byId('sc_status')?.value||'bekliyor',whatsapp:byId('sc_whatsapp')?.value||'',email:byId('sc_email')?.value||'',note:byId('sc_note')?.value||'',updatedAt:new Date().toISOString()};
+    const arr=getCari(); const i=arr.findIndex(x=>x.id===id); if(i>=0)arr[i]=obj; else arr.unshift(obj); setCari(arr); clearSponsorCariForm(); renderSponsorCari(); alert('Sponsor cari kaydı kaydedildi.');
+  }
+  window.editSponsorCari=function(id){const c=getCari().find(x=>x.id===id); if(!c)return; ensureCariUI(); byId('sc_id').value=c.id; byId('sc_name').value=c.name||''; byId('sc_package').value=c.packageId||'bronz'; byId('sc_start').value=c.start||today(); byId('sc_end').value=c.end||addMonths(Date.now(),1); byId('sc_fee').value=c.monthlyFee||pkg(c.packageId).fee; byId('sc_paid').value=c.paidAmount||0; byId('sc_status').value=c.status||'bekliyor'; byId('sc_whatsapp').value=c.whatsapp||''; byId('sc_email').value=c.email||''; byId('sc_note').value=c.note||''; window.scrollTo({top:0,behavior:'smooth'});}
+  window.deleteSponsorCari=function(id){if(!confirm('Cari kaydı silinsin mi?'))return; setCari(getCari().filter(x=>x.id!==id)); renderSponsorCari();}
+  window.markSponsorCariPaid=function(id){const arr=getCari(); const c=arr.find(x=>x.id===id); if(!c)return; c.paidAmount=Number(c.monthlyFee||pkg(c.packageId).fee); c.status='odendi'; c.updatedAt=new Date().toISOString(); setCari(arr); renderSponsorCari();}
+  function reportText(c){const p=pkg(c.packageId); const fee=Number(c.monthlyFee||p.fee), paid=Number(c.paidAmount||0), left=Math.max(0,fee-paid); return `MolaVolt Sponsor Anlaşma Raporu\n\nFirma: ${c.name}\nPaket: ${p.name}\nBaşlama: ${c.start||'-'}\nBitiş: ${c.end||'-'}\nAylık ücret: ${money(fee)}\nTahsil edilen: ${money(paid)}\nKalan: ${money(left)}\nDurum: ${c.status||'bekliyor'}\n\nPaket kapsamı:\n- ${p.features.join('\n- ')}\n\nNot: ${c.note||'-'}\n\nMolaVolt`;}
+  window.sendSponsorReport=function(id,mode){const c=getCari().find(x=>x.id===id); if(!c)return; const text=reportText(c); if(mode==='mail'&&c.email){location.href=`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('MolaVolt Sponsor Anlaşma Raporu')}&body=${encodeURIComponent(text)}`;return;} if(c.whatsapp){let wp=String(c.whatsapp).replace(/\D/g,''); if(wp&&wp[0]==='0')wp='9'+wp; window.open(`https://wa.me/${wp}?text=${encodeURIComponent(text)}`,'_blank'); return;} navigator.clipboard&&navigator.clipboard.writeText(text); alert('Rapor metni kopyalandı. WhatsApp veya e-posta bilgisi yok.');}
+  window.renderSponsorCari=function(){ensureCariUI(); const box=byId('sponsorCariList'); if(!box)return; const arr=getCari().sort((a,b)=>pkg(b.packageId).rank-pkg(a.packageId).rank||String(a.end||'').localeCompare(String(b.end||''))); if(!arr.length){box.innerHTML='<div class="empty">Henüz sponsor cari kaydı yok.</div>'; return;} box.innerHTML=arr.map(c=>{const p=pkg(c.packageId); const fee=Number(c.monthlyFee||p.fee), paid=Number(c.paidAmount||0), left=Math.max(0,fee-paid); const days=c.end?Math.ceil((new Date(c.end)-new Date())/86400000):0; const statusClass=left<=0?'ok':(paid>0?'warn':''); return `<div class="cariRow"><h4>${safe(c.name)} ${packagePill(c.packageId)}</h4><p class="muted">${safe(c.start||'-')} → ${safe(c.end||'-')} ${days?`· ${days} gün kaldı`:''}</p><div class="cariMini"><div class="cariBox"><span>Aylık ücret</span><b>${money(fee)}</b></div><div class="cariBox"><span>Tahsil edilen</span><b>${money(paid)}</b></div><div class="cariBox"><span>Kalan</span><b>${money(left)}</b></div><div class="cariBox"><span>Durum</span><b><span class="statusPill ${statusClass}">${left<=0?'Tahsil edildi':(paid>0?'Kısmi':'Bekliyor')}</span></b></div></div>${c.note?`<p class="muted" style="margin-top:8px">${safe(c.note)}</p>`:''}<div class="cariActions"><button class="secondaryBtn" onclick="editSponsorCari('${safe(c.id)}')">Düzenle</button><button class="secondaryBtn" onclick="markSponsorCariPaid('${safe(c.id)}')">Tahsil edildi</button><button class="secondaryBtn" onclick="sendSponsorReport('${safe(c.id)}','wp')">Rapor gönder</button><button class="secondaryBtn" onclick="deleteSponsorCari('${safe(c.id)}')">Sil</button></div></div>`}).join('');}
+
+  const oldShow=window.showAdminTab;
+  if(typeof oldShow==='function') window.showAdminTab=function(tab){ensureCariUI(); oldShow(tab); if(tab==='cari')renderSponsorCari();};
+  const oldRender=window.renderAdmin;
+  if(typeof oldRender==='function') window.renderAdmin=function(){ensureCariUI(); oldRender(); renderSponsorCari(); patchSponsorAdminList();};
+  const oldFair=window.fairSponsors;
+  window.fairSponsors=function(list,context){const arr=[...(list||[])]; const ranked=arr.sort((a,b)=>pkg(b.packageId).rank-pkg(a.packageId).rank || String(a.name||'').localeCompare(String(b.name||''),'tr')); return oldFair?ranked:arr;};
+  function patchSponsorAdminList(){const box=byId('adminSponsorList'); if(!box)return; const arr=window.fairSponsors?window.fairSponsors(window.sponsors?window.sponsors():[],'admin'):(window.sponsors?window.sponsors():[]); if(!arr.length)return; box.innerHTML=arr.map(s=>`<div class="station"><div class="sponsorHead">${typeof sponsorLogoHtml==='function'?sponsorLogoHtml(s):'<div class="gift">🎁</div>'}<div><h4>${safe(s.name)} <span class="tag g">${safe(s.discount||'')}</span></h4><p>${safe(s.offer||'')}</p><div class="tags">${packagePill(s.packageId||'bronz')}<span class="tag b">${safe(s.whatsapp||'WP yok')}</span></div></div></div><div class="adminActions"><button class="secondaryBtn" onclick="editSponsor('${safe(s.id)}')">Düzenle</button><button class="secondaryBtn" onclick="deleteSponsor('${safe(s.id)}')">Sil</button></div></div>`).join('');}
+  const oldSave=window.saveSponsor;
+  window.saveSponsor=function(){const id=byId('sp_id')?.value||'sp-'+Date.now(); const obj={id,stationId:byId('sp_station')?.value||'',name:byId('sp_name')?.value||'Sponsor işletme',discount:byId('sp_discount')?.value||'%10',packageId:byId('sp_package')?.value||'bronz',offer:byId('sp_offer')?.value||'MolaVolt kullanıcılarına özel fırsat',whatsapp:byId('sp_whatsapp')?.value||'',logo:byId('sp_logo')?byId('sp_logo').value:''}; const arr=window.sponsors?window.sponsors():[]; const i=arr.findIndex(x=>x.id===id); if(i>=0)arr[i]=obj; else arr.unshift(obj); if(window.setSponsors)window.setSponsors(arr); if(window.clearSponsorForm)window.clearSponsorForm(); if(window.renderAdmin)window.renderAdmin(); if(window.renderSponsors)window.renderSponsors(); alert('Fırsat kaydedildi.');}
+  const oldEdit=window.editSponsor;
+  window.editSponsor=function(id){const s=window.sponsors?window.sponsors().find(x=>x.id===id):null; if(!s){if(oldEdit)oldEdit(id);return;} ensurePackageInput(); byId('sp_id').value=s.id; byId('sp_station').value=s.stationId||''; byId('sp_name').value=s.name||''; byId('sp_discount').value=s.discount||''; if(byId('sp_package'))byId('sp_package').value=s.packageId||'bronz'; byId('sp_offer').value=s.offer||''; byId('sp_whatsapp').value=s.whatsapp||''; if(byId('sp_logo'))byId('sp_logo').value=s.logo||'';}
+  const oldClear=window.clearSponsorForm;
+  window.clearSponsorForm=function(){if(oldClear)oldClear(); if(byId('sp_package'))byId('sp_package').value='bronz';}
+  document.addEventListener('DOMContentLoaded',function(){ensureCariUI(); clearSponsorCariForm();});
+  window.addEventListener('load',function(){ensureCariUI(); if(document.body.classList.contains('admin-mode'))renderSponsorCari();});
+})();
+</script>
+
 </body>
 </html>
