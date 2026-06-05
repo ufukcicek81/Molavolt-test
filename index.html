@@ -9,6 +9,8 @@
 <!-- UFUK_STATION_CARD_EPDK_BADGE_HIDE_0622 -->
 <!-- UFUK_LONG_ROUTE_MULTISTOP_LOW_SOC_FIX_0629 -->
 <!-- UFUK_LONG_ROUTE_OSRM_FALLBACK_0628 -->
+<!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
+<!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -3323,6 +3325,14 @@ window.addEventListener('load',()=>{
     return buildPlan0606(routeList,distance,battery,soc,arrival,target,consumption,price,chargeKw);
   };
 
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     try{
       if(typeof routeToast==='function') routeToast('Rota hesaplanıyor…');
@@ -3653,6 +3663,14 @@ window.addEventListener('load',()=>{
     if(waypoints) url+=`&waypoints=${encodeURIComponent(waypoints)}`;
     return url;
   }
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=byId('routeResult');
     try{
@@ -3878,6 +3896,14 @@ window.addEventListener('load',()=>{
     return {stops,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
 
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=q('routeResult');
     try{
@@ -4080,6 +4106,14 @@ window.addEventListener('load',()=>{
     }
     return {stops,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=q('routeResult');
     try{
@@ -4200,6 +4234,14 @@ window.addEventListener('load',()=>{
     }
     return {stops,provider,rejectedCount,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=q('routeResult');
     try{
@@ -4342,6 +4384,14 @@ window.addEventListener('load',()=>{
     }
     return {stops,lastNoCandidate,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalTimeText:totalTimeRange(stops),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=q('routeResult');
     try{
@@ -4680,7 +4730,7 @@ window.addEventListener('load',()=>{
 
   async function buildPlan(list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,opts){
     const finalReserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; const usedIds=new Set(); let lowMode=soc<=15;
-    const force80=!!opts?.force80;
+    const force80=!!opts?.force80; const forceLimitPct=80; const forceLimitEnergy=battery*forceLimitPct/100;
     for(let i=0;i<14;i++){
       const travelReserve=(i===0&&lowMode)?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018);
       const remainingToFinishKm=Math.max(0,(1-progress)*distance);
@@ -4709,8 +4759,16 @@ window.addEventListener('load',()=>{
       const nextProgress=Math.max(stop.routeProgress||0,progress+segKm/Math.max(distance,1));
       const remainingKm=Math.max(0,(1-nextProgress)*distance); const finalNeed=remainingKm*consumption/100+finalReserve;
       let chargeTo;
-      if(force80){ chargeTo=Math.min(battery,Math.max(battery*0.80,finalNeed)); }
+      if(force80){
+        /* UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631
+           Kullanıcı 'Her molada %80’e kadar şarj et' seçtiyse,
+           finalNeed daha yüksek çıksa bile molada %80 üstüne çıkma.
+           Sistem kalan rota için sonraki molayı hesaplasın; gerekiyorsa uyarı versin. */
+        chargeTo=Math.min(battery,forceLimitEnergy);
+      }
       else { chargeTo=Math.min(battery,Math.max(finalNeed,battery*Math.max(arrival+8,35)/100)); }
+      // 0631 güvenlik kilidi: force80 açıksa hiçbir hesap %80 üstüne çıkamaz.
+      if(force80) chargeTo=Math.min(chargeTo, forceLimitEnergy);
       const chargeKwh=Math.max(0,chargeTo-arrivalEnergy); const kw=stKw(stop)||chargeKw||90; const tr=chargeTimeRange(chargeKwh,kw);
       stops.push({...stop,arrivalSoc:arrivalEnergy/battery*100,chargeToSoc:chargeTo/battery*100,chargeKwh,chargeMin:Math.ceil((tr.min+tr.max)/2),chargeMinLow:tr.min,chargeMinHigh:tr.max,chargeTimeText:tr.text,cost:chargeKwh*price,effectiveKw:kw,emergencyFirst:i===0&&lowMode});
       energy=chargeTo; progress=nextProgress; lowMode=false;
@@ -4718,10 +4776,19 @@ window.addEventListener('load',()=>{
     return {stops,totalKwh:stops.reduce((a,s)=>a+s.chargeKwh,0),totalMin:stops.reduce((a,s)=>a+s.chargeMin,0),totalTimeText:totalTimeRange(stops),totalCost:stops.reduce((a,s)=>a+s.cost,0)};
   }
 
+
+  // UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631: checkbox açıkken gizli hedef de 80'e sabitlenir.
+  function syncForce80Target0631(){
+    const cb=q('rp_force80'); const t=q('rp_charge_target');
+    if(cb&&t&&cb.checked) t.value='80';
+  }
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='rp_force80')syncForce80Target0631();});
+
   window.planEvRoute=async function(){
     const out=q('routeResult');
     try{
       ensureSmartRouteOptions();
+      syncForce80Target0631();
       toast('Rota hesaplanıyor…');
       if(out)out.innerHTML='<div class="routeDataLoading"><b>Rota hesaplanıyor…</b></div>';
       let ready={ok:true,source:'memory',count:(stations||[]).length};
@@ -4739,11 +4806,11 @@ window.addEventListener('load',()=>{
       const pack=await preCandidates(dest,firstReach,soc<=15); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
       const energyNeed=distance*consumption/100; const startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
-      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b><br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.round(s.chargeToSoc||80)}</b>`:''}</div>`).join('')+'</div>';}
+      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b><br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}</div>`).join('')+'</div>';}
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş yönünde güvenli şarj durağı bulunamadı. Lütfen en yakın güvenli noktaya yönlenmeden önce şarj durumunu kontrol et.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       const climateText={off:'Klima kapalı',eco:'Hafif klima',normal:'Normal klima',high:'Yoğun klima'}[factors.climate]||'Klima';
-      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${factors.passengers} yolcu · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada %80 hedeflendi':''}</div>`;
+      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${factors.passengers} yolcu · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div>`;
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç'; if(lowSocProblem)actionLabel='Hedef rotasını aç';
       if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
