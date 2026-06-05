@@ -7,6 +7,7 @@
 <!-- UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619 -->
 <!-- UFUK_ADMIN_EASY_LOGIN_0621 -->
 <!-- UFUK_STATION_CARD_EPDK_BADGE_HIDE_0622 -->
+<!-- UFUK_LONG_ROUTE_MULTISTOP_LOW_SOC_FIX_0629 -->
 <!-- UFUK_LONG_ROUTE_OSRM_FALLBACK_0628 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
@@ -3260,7 +3261,7 @@ window.addEventListener('load',()=>{
     const stops=[];
     let warning='';
 
-    for(let i=0;i<10;i++){
+    for(let i=0;i<14;i++){
       const usable=Math.max(0,energy-reserve);
       const reachableKm=usable/Math.max(consumption,1)*100;
       const maxProgress=progress+(reachableKm/Math.max(distance,1));
@@ -3623,7 +3624,7 @@ window.addEventListener('load',()=>{
     const reserve=battery*Math.max(0,arrival)/100;
     let energy=battery*Math.max(0,soc)/100, progress=0;
     const stops=[];
-    for(let i=0;i<10;i++){
+    for(let i=0;i<14;i++){
       const usable=Math.max(0,energy-reserve);
       const reachableKm=usable/Math.max(consumption,1)*100;
       const maxProgress=progress+(reachableKm/Math.max(distance,1));
@@ -4546,7 +4547,7 @@ window.addEventListener('load',()=>{
    Google key gerektirmez; rakım için Open-Meteo Elevation, rota için mevcut OSRM/Vercel yapısı kullanılır.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_LONG_ROUTE_OSRM_FALLBACK_0628';
+  const ROUTE_FIX_VERSION='UFUK_LONG_ROUTE_MULTISTOP_LOW_SOC_FIX_0629';
   const ROUTE_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function esc2(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
@@ -4605,10 +4606,24 @@ window.addEventListener('load',()=>{
       const emergencyReach=Math.max(5,reachKm*1.75+4);
       const near=raw.filter(s=>s.originDriveKm<=emergencyReach && s.routeProgress<0.22).sort((a,b)=>(a.originDriveKm-b.originDriveKm)+(a.routeDeviation-b.routeDeviation)*0.35-(a.routeKw-b.routeKw)*0.01);
       const routeNear=raw.filter(s=>s.routeProgress>=0 && s.routeProgress<0.25 && s.routeDeviation<=25).sort((a,b)=>a.alongKm-b.alongKm);
-      const seen=new Set(); list=[...near,...routeNear].filter(s=>{const id=s.id||s.name+'_'+s.lat+'_'+s.lon; if(seen.has(id))return false; seen.add(id); return true;}).slice(0,60); used=25;
+      // UFUK_LONG_ROUTE_MULTISTOP_LOW_SOC_FIX_0629:
+      // Düşük şarjda ilk acil durağı bulmak için yakın istasyonları öne al,
+      // ama uzun rotanın devamındaki istasyonları listeden çıkarma. Aksi halde
+      // sistem ilk şarjdan sonra 828 km gibi uzun yolda tek durakta kalıyordu.
+      const valid=raw.filter(s=>s.routeProgress>0.006&&s.routeProgress<0.985);
+      const corridors=road.ok?[1.2,2,4,7,12,20]:[5,10,18,28,40];
+      let fullRoute=[];
+      for(const c of corridors){
+        const l=valid.filter(s=>s.routeDeviation<=c).sort((a,b)=>a.routeProgress-b.routeProgress);
+        if(l.length>fullRoute.length){fullRoute=l;used=c;}
+        if(l.length>=80){fullRoute=l;used=c;break;}
+      }
+      const seen=new Set();
+      list=[...near,...routeNear,...fullRoute].filter(s=>{const id=s.id||s.name+'_'+s.lat+'_'+s.lon; if(seen.has(id))return false; seen.add(id); return true;}).slice(0,180);
+      used=used||25;
     }else{
-      const corridors=road.ok?[1.2,2,4,7,12]:[5,10,18,28]; const valid=raw.filter(s=>s.routeProgress>0.006&&s.routeProgress<0.985);
-      for(const c of corridors){const l=valid.filter(s=>s.routeDeviation<=c).sort((a,b)=>a.routeProgress-b.routeProgress); if(l.length>list.length){list=l;used=c;} if(l.length>=30){list=l;used=c;break;}}
+      const corridors=road.ok?[1.2,2,4,7,12,20]:[5,10,18,28,40]; const valid=raw.filter(s=>s.routeProgress>0.006&&s.routeProgress<0.985);
+      for(const c of corridors){const l=valid.filter(s=>s.routeDeviation<=c).sort((a,b)=>a.routeProgress-b.routeProgress); if(l.length>list.length){list=l;used=c;} if(l.length>=80){list=l;used=c;break;}}
     }
     return {list,usedCorridor:used,baseKm,source:road.source,points:road.points};
   }
@@ -4666,7 +4681,7 @@ window.addEventListener('load',()=>{
   async function buildPlan(list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,opts){
     const finalReserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; const usedIds=new Set(); let lowMode=soc<=15;
     const force80=!!opts?.force80;
-    for(let i=0;i<10;i++){
+    for(let i=0;i<14;i++){
       const travelReserve=(i===0&&lowMode)?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018);
       const remainingToFinishKm=Math.max(0,(1-progress)*distance);
       const finishNeedKwh=remainingToFinishKm*consumption/100+finalReserve;
