@@ -1243,7 +1243,7 @@ function stationCard(s){
     </div>
     <div class="metrics">
       <span>${esc(s.power||'kW bilgisi yok')}</span>
-      <span class="stationOfferMetric">${offers>0 ? (offers+' fırsat') : 'Fırsat yok'}</span>
+      ${offers>0 ? `<span class="stationOfferMetric">${offers} fırsat</span>` : ''}
     </div>
     <div class="cardActions">
       <button type="button" class="mapShowBtn" onclick="openStationMap('${esc(s.id)}',event)">Haritada gör</button>
@@ -4481,5 +4481,50 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* UFUK_SPONSOR_CARI_TAB_AND_NO_EMPTY_OFFER_TEXT_0626 */
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  // Sponsor Cari sekmesi dinamik eklendiği için eski showAdminTab sadece 4 sekmeyi açıyordu.
+  // Bu override tüm admin sekmelerini genel seçiciyle yönetir; cari sekmesi artık boş kalmaz.
+  window.showAdminTab = function(name){
+    if(typeof window.ensureCariUI === 'function'){ try{ window.ensureCariUI(); }catch(e){} }
+    document.querySelectorAll('.adminTabBtn').forEach(function(btn){
+      btn.classList.toggle('active', btn.id === 'adminTab-' + name);
+    });
+    document.querySelectorAll('.adminSection').forEach(function(sec){
+      sec.classList.toggle('active', sec.id === 'adminSection-' + name);
+    });
+    try{ localStorage.setItem('molavolt_admin_tab', name); }catch(e){}
+    if(name === 'cari' && typeof window.renderSponsorCari === 'function'){
+      window.renderSponsorCari();
+    }else if(typeof window.renderAdmin === 'function'){
+      // Cari dışındaki sekmelerde mevcut admin render düzeni çalışmaya devam etsin.
+      window.renderAdmin();
+    }
+  };
+
+  // Ana kartlarda eski sürümden kalan boş fırsat etiketi varsa tamamen kaldır.
+  function hideEmptyOfferText(){
+    document.querySelectorAll('.stationOfferMetric').forEach(function(el){
+      if((el.textContent||'').trim().toLowerCase() === 'fırsat yok'){
+        el.remove();
+      }
+    });
+  }
+  var oldRenderAll = window.renderAll;
+  if(typeof oldRenderAll === 'function'){
+    window.renderAll = function(){
+      var r = oldRenderAll.apply(this, arguments);
+      setTimeout(hideEmptyOfferText, 0);
+      return r;
+    };
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(hideEmptyOfferText, 300); });
+  window.addEventListener('load', function(){ setTimeout(hideEmptyOfferText, 500); });
+})();
+</script>
 </body>
 </html>
