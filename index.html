@@ -663,6 +663,21 @@ body:not(.admin-mode) #adminEmergencyBar0520{
   margin-top:6px;
 }
 
+
+
+/* UFUK_HOME_STATUS_TEXT_HIDE_0623 */
+#locStatus,
+#dataHealth0521,
+.dataHealthBox{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+
 </style>
  <link rel="manifest" href="manifest.json?v=0607">
   <meta name="theme-color" content="#07111d">
@@ -4311,5 +4326,24 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* UFUK_HOME_STATUS_TEXT_HIDE_0623 */
+(function(){
+  function hideHomeStatusTexts(){
+    var loc=document.getElementById('locStatus');
+    if(loc){ loc.textContent=''; loc.style.display='none'; }
+    var box=document.getElementById('dataHealth0521');
+    if(box){ box.remove(); }
+    document.querySelectorAll('.dataHealthBox').forEach(function(el){ el.remove(); });
+  }
+  window.setLocStatus=function(){ hideHomeStatusTexts(); };
+  window.updateDataHealth0521=function(){ hideHomeStatusTexts(); };
+  document.addEventListener('DOMContentLoaded', hideHomeStatusTexts);
+  window.addEventListener('load', hideHomeStatusTexts);
+  setTimeout(hideHomeStatusTexts, 300);
+  setTimeout(hideHomeStatusTexts, 1200);
+})();
+</script>
 </body>
 </html>
