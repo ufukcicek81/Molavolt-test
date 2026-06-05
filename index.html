@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<!-- UFUK_ADMIN_EMERGENCY_FLASH_HIDE_0620 -->
 <!-- UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619 -->
+<!-- UFUK_ADMIN_EASY_LOGIN_0621 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -620,6 +622,44 @@ body:not(.admin-mode) .adminEmergencyBar{display:block}
     min-width:calc(72vw - 22px)!important;
     max-width:calc(72vw - 22px)!important;
   }
+}
+
+
+/* UFUK_ADMIN_EMERGENCY_FLASH_HIDE_0620: müşteri ekranında "Admin paneli zorla aç" çubuğu yenilemede görünmesin */
+.adminEmergencyBar,
+#adminEmergencyBar0520{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body:not(.admin-mode) .adminEmergencyBar,
+body:not(.admin-mode) #adminEmergencyBar0520{
+  display:none!important;
+}
+
+
+/* UFUK_ADMIN_EASY_LOGIN_0621: Logo 5 dokunuş + admin çıkış */
+.adminExitBar0621{
+  margin:10px 0 14px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.adminExitBar0621 button{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:12px 14px;
+  font-weight:900;
+  background:rgba(255,255,255,.07);
+  color:#eaf4ff;
+  border:1px solid rgba(255,255,255,.12);
+}
+.adminQuickHint0621{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
 }
 
 </style>
@@ -2737,6 +2777,72 @@ window.addEventListener('load',()=>{
 });
 
 </script>
+
+<script>
+/* UFUK_ADMIN_EASY_LOGIN_0621_JS
+   Basit giriş: MolaVolt logosuna 5 kez hızlı dokun -> şifre: 8790
+   Direkt link: ?admin=ufuk8790 veya #admin=ufuk8790 hâlâ çalışır.
+*/
+(function(){
+  const ADMIN_PASS_0621='8790';
+  function clearAdmin0621(){
+    try{ localStorage.removeItem('molavolt_force_admin'); }catch(e){}
+    try{ sessionStorage.removeItem('molavolt_admin_tap_count'); }catch(e){}
+    const clean=location.origin+location.pathname;
+    location.replace(clean);
+  }
+  window.exitAdminMode0621=clearAdmin0621;
+  function addAdminExit0621(){
+    const adminPage=document.getElementById('adminPage');
+    if(!adminPage || document.getElementById('adminExitBar0621')) return;
+    adminPage.insertAdjacentHTML('afterbegin',
+      '<div id="adminExitBar0621" class="adminExitBar0621"><button onclick="exitAdminMode0621()">Müşteri ekranına dön</button></div>'
+    );
+  }
+  const oldForce0621=window.forceAdminMode0520;
+  if(typeof oldForce0621==='function'){
+    window.forceAdminMode0520=function(){
+      oldForce0621();
+      addAdminExit0621();
+    };
+  }
+  function openAdminWithPassword0621(){
+    const pass=prompt('Admin şifresi');
+    if(pass===ADMIN_PASS_0621 || String(pass||'').toLowerCase().trim()==='ufuk8790'){
+      try{ localStorage.setItem('molavolt_force_admin','1'); }catch(e){}
+      if(typeof window.forceAdminMode0520==='function') window.forceAdminMode0520();
+      else location.href=location.pathname+'?admin=ufuk8790';
+    }else if(pass!==null){
+      alert('Şifre hatalı');
+    }
+  }
+  function bindLogoTap0621(){
+    const logo=document.querySelector('.logo');
+    if(!logo || logo.dataset.adminEasyLogin0621==='1') return;
+    logo.dataset.adminEasyLogin0621='1';
+    let taps=[];
+    logo.addEventListener('click',function(){
+      const now=Date.now();
+      taps=taps.filter(t=>now-t<3000);
+      taps.push(now);
+      if(taps.length>=5){
+        taps=[];
+        openAdminWithPassword0621();
+      }
+    });
+    logo.addEventListener('contextmenu',function(e){
+      e.preventDefault();
+      openAdminWithPassword0621();
+    });
+  }
+  window.addEventListener('load',function(){
+    bindLogoTap0621();
+    setTimeout(bindLogoTap0621,700);
+    if(document.body.classList.contains('admin-mode')) addAdminExit0621();
+  });
+})();
+</script>
+
 <script>
 
 /* UFUK_IOS_FIREBASE_LOCATION_FIX_0521_JS */
@@ -2874,7 +2980,7 @@ function requestLocation0521(force=false){
   const timer=setTimeout(()=>{
     if(finished)return;
     finished=true;
-    done('Konum cevabı gecikti; varsayılan/son konumla devam ediliyor.');
+    done('Konum cevabı gecikti; varsayılan/son konumla devam ediliyor. Konum için “Konum izni ver”e bas.');
   },7000);
   navigator.geolocation.getCurrentPosition(pos=>{
     if(finished)return;
@@ -2886,15 +2992,18 @@ function requestLocation0521(force=false){
     if(finished)return;
     finished=true; clearTimeout(timer);
     let msg='Konum alınamadı; varsayılan/son konumla devam ediliyor.';
-    if(err && err.code===1) msg='Konum izni kapalı. iPhone’da Safari ayarlarından konumu açıp sayfayı yenileyin.';
+    if(err && err.code===1) msg='Konum izni kapalı. iPhone’da Safari > Konum > İzin ver yapıp tekrar deneyin.';
     done(msg);
   },{enableHighAccuracy:false,timeout:6500,maximumAge:600000});
 }
 function addLocationButtons0521(){
-  /* UFUK_HOME_SPONSOR_COMPACT_LOCATION_BUTTONS_HIDE_0619: Konum/Düzce butonları kaldırıldı. */
-  return;
+  const loc=document.getElementById('locStatus');
+  if(!loc || document.getElementById('locFixPanel0521'))return;
+  loc.insertAdjacentHTML('afterend',`<div id="locFixPanel0521" class="locFixPanel">
+    <button onclick="requestLocation0521(true)">Konum izni ver</button>
+    <button onclick="userPos={lat:40.840621,lon:31.152219};savePos(userPos);buildStations();applyFilters();setLocStatus('Düzce başlangıç kabul edildi.');">Düzce ile devam</button>
+  </div>`);
 }
-
 function locateSort(){
   buildStations();
   applyFilters();
