@@ -11,6 +11,7 @@
 <!-- UFUK_LONG_ROUTE_OSRM_FALLBACK_0628 -->
 <!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
 <!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
+<!-- UFUK_PASSENGER_DRIVER_EXCLUDED_FIX_0632 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -4619,7 +4620,7 @@ window.addEventListener('load',()=>{
       <h4>Akıllı rota hesabı</h4>
       <label class="routeToggleLine"><input id="rp_elevation" type="checkbox" checked> Rakım farkını hesaba kat</label>
       <div class="routeSmartGrid">
-        <div><label>Yolcu sayısı</label><input id="rp_passengers" type="number" inputmode="numeric" min="1" max="8" value="1"></div>
+        <div><label>Sürücü hariç yolcu</label><input id="rp_passengers" type="number" inputmode="numeric" min="0" max="7" value="0"></div>
         <div><label>Klima kullanımı</label><select id="rp_climate"><option value="off">Kapalı</option><option value="eco">Hafif</option><option value="normal" selected>Normal</option><option value="high">Yoğun</option></select></div>
       </div>
       <label class="routeToggleLine"><input id="rp_force80" type="checkbox"> Her molada %80’e kadar şarj et</label>
@@ -4707,7 +4708,7 @@ window.addEventListener('load',()=>{
       try{const data=await fetchJson('https://api.open-meteo.com/v1/elevation?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon),{},5000); elev=(data.elevation||[]).map(Number).filter(Number.isFinite); try{sessionStorage.setItem(key,JSON.stringify({time:Date.now(),elev}))}catch(_){}}catch(e){return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım alınamadı'}}
     }
     let ascent=0,descent=0; for(let i=1;i<elev.length;i++){const d=elev[i]-elev[i-1]; if(d>3)ascent+=d; else if(d<-3)descent+=-d;}
-    const passengers=Math.max(1,Math.min(8,Math.round(num(q('rp_passengers')?.value,1))));
+    const passengers=Math.max(0,Math.min(7,Math.round(num(q('rp_passengers')?.value,0))));
     const mass=1850+passengers*75;
     const upKwh=(mass*9.81*ascent/3600000)/0.88;
     const regenKwh=(mass*9.81*descent/3600000)*0.55;
@@ -4716,11 +4717,11 @@ window.addEventListener('load',()=>{
     return {enabled:true,ascent:Math.round(ascent),descent:Math.round(descent),elevKwh,note:`Rakım: +${Math.round(ascent)} m / -${Math.round(descent)} m`};
   }
   function routeFactors(distanceKm,baseConsumption,elev){
-    const passengers=Math.max(1,Math.min(8,Math.round(num(q('rp_passengers')?.value,1))));
+    const passengers=Math.max(0,Math.min(7,Math.round(num(q('rp_passengers')?.value,0))));
     const climate=q('rp_climate')?.value||'normal';
     const climateMap={off:0,eco:0.7,normal:1.4,high:2.4};
     const climateKwh=(distanceKm*(climateMap[climate]||0)/100);
-    const passengerKwh=(distanceKm*Math.max(0,passengers-1)*0.35/100);
+    const passengerKwh=(distanceKm*Math.max(0,passengers)*0.35/100);
     const elevKwh=elev?.elevKwh||0;
     const baseEnergy=distanceKm*baseConsumption/100;
     const totalEnergy=Math.max(0,baseEnergy+climateKwh+passengerKwh+elevKwh);
@@ -4810,7 +4811,8 @@ window.addEventListener('load',()=>{
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş yönünde güvenli şarj durağı bulunamadı. Lütfen en yakın güvenli noktaya yönlenmeden önce şarj durumunu kontrol et.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       const climateText={off:'Klima kapalı',eco:'Hafif klima',normal:'Normal klima',high:'Yoğun klima'}[factors.climate]||'Klima';
-      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${factors.passengers} yolcu · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div>`;
+      const passengerText=factors.passengers>0?`Sürücü + ${factors.passengers} yolcu`:'Sadece sürücü';
+      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${passengerText} · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div>`;
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç'; if(lowSocProblem)actionLabel='Hedef rotasını aç';
       if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
