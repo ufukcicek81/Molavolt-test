@@ -722,7 +722,38 @@ body:not(.admin-mode) #adminEmergencyBar0520{
 }
 .stationOfferMetric{font-weight:900!important;color:#ffe9a6!important}
 
+
+/* UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633 */
+html:not(.mv-boot-ready) .app,
+html:not(.mv-boot-ready) .bottomNav{
+  visibility:hidden!important;
+}
+html.mv-admin-start .customerOnly,
+html.mv-admin-start .bottomNav{
+  display:none!important;
+}
+html.mv-admin-start .adminOnly{
+  display:block!important;
+}
+
 </style>
+<script>
+/* UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633: yenilemede yanlış/admin ekranı parlamasını engeller */
+(function(){
+  try{
+    var p=new URLSearchParams(location.search);
+    var h=new URLSearchParams((location.hash||'').replace(/^#/,''));
+    var vals=[p.get('admin'),p.get('a'),p.get('mode'),p.get('panel'),h.get('admin'),h.get('a'),h.get('mode'),h.get('panel')]
+      .filter(Boolean).map(function(v){return String(v).toLowerCase().trim();});
+    var isAdmin=vals.indexOf('ufuk8790')>-1 || vals.indexOf('1')>-1 || vals.indexOf('true')>-1 || vals.indexOf('admin')>-1 || localStorage.getItem('molavolt_force_admin')==='1';
+    if(isAdmin) document.documentElement.classList.add('mv-admin-start');
+  }catch(e){}
+  document.addEventListener('DOMContentLoaded',function(){
+    document.documentElement.classList.add('mv-boot-ready');
+  });
+})();
+</script>
+
  <link rel="manifest" href="manifest.json?v=0607">
   <meta name="theme-color" content="#07111d">
   <link rel="apple-touch-icon" href="icon-192.png?v=0607">
@@ -4187,7 +4218,7 @@ window.addEventListener('load',()=>{
     try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<15*60*1000&&Array.isArray(c.points)&&c.points.length>3)return c;}catch(_){}
     try{
       const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=false&steps=false`;
-      const data=await fetchJson(url,{headers:{Accept:'application/json'}},4500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
+      const data=await fetchJson(url,{headers:{Accept:'application/json'}},2500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
       const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
       if(points.length<3)throw new Error('rota boş');
       const pack={ok:true,source:'osrm-preline',points,distanceKm:(Number(r.distance)||0)/1000,time:Date.now()};
@@ -4319,7 +4350,7 @@ window.addEventListener('load',()=>{
     try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<15*60*1000&&Array.isArray(c.points)&&c.points.length>3)return c;}catch(_){}
     try{
       const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=false&steps=false`;
-      const data=await fetchJson(url,{headers:{Accept:'application/json'}},4500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
+      const data=await fetchJson(url,{headers:{Accept:'application/json'}},2500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
       const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
       if(points.length<3)throw new Error('rota boş');
       const pack={ok:true,source:'osrm-preline',points,distanceKm:(Number(r.distance)||0)/1000,time:Date.now()};
@@ -4352,7 +4383,7 @@ window.addEventListener('load',()=>{
   }
   async function checkByVercelApi(dest,cands,opts){
     const origin={lat:num(userPos?.lat,40.840621),lon:num(userPos?.lon,31.152219)};
-    const payload={origin,destination:{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)},emergencyMode:!!opts?.emergencyMode,minProgress:opts?.emergencyMode?0:0.006,maxRouteDeviationKm:opts?.emergencyMode?30:7,maxExtraKm:opts?.emergencyMode?18:undefined,candidates:cands.slice(0,14).map(s=>({id:s.id,name:s.name,address:s.address,brand:s.brand,power:s.power,lat:s.lat,lon:s.lon,routeDeviation:s.routeDeviation,routeProgress:s.routeProgress,alongKm:s.alongKm,routeKw:s.routeKw,originDriveKm:s.originDriveKm})),maxCandidates:14};
+    const payload={origin,destination:{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)},emergencyMode:!!opts?.emergencyMode,minProgress:opts?.emergencyMode?0:0.006,maxRouteDeviationKm:opts?.emergencyMode?30:7,maxExtraKm:opts?.emergencyMode?18:undefined,candidates:cands.slice(0,8).map(s=>({id:s.id,name:s.name,address:s.address,brand:s.brand,power:s.power,lat:s.lat,lon:s.lon,routeDeviation:s.routeDeviation,routeProgress:s.routeProgress,alongKm:s.alongKm,routeKw:s.routeKw,originDriveKm:s.originDriveKm})),maxCandidates:8};
     return await fetchJson(routeApiUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},6500);
   }
   async function buildPlan(list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw){
@@ -4364,8 +4395,8 @@ window.addEventListener('load',()=>{
       if(energy>=finishNeedKwh)break;
       const reachableKm=Math.max(0,energy-travelReserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
       let cand;
-      if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,14);}
-      else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,14);}
+      if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,8);}
+      else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,8);}
       if(!cand.length){lastNoCandidate=true; break;}
       let accepted=[];
       try{const api=await checkByVercelApi(dest,cand,{emergencyMode:i===0&&lowMode}); accepted=(api.accepted||[]);}catch(e){accepted=[];}
@@ -4598,7 +4629,7 @@ window.addEventListener('load',()=>{
    Google key gerektirmez; rakım için Open-Meteo Elevation, rota için mevcut OSRM/Vercel yapısı kullanılır.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_LONG_ROUTE_MULTISTOP_LOW_SOC_FIX_0629';
+  const ROUTE_FIX_VERSION='UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633';
   const ROUTE_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function esc2(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
@@ -4634,7 +4665,7 @@ window.addEventListener('load',()=>{
     try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<15*60*1000&&Array.isArray(c.points)&&c.points.length>3)return c;}catch(_){}
     try{
       const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=false&steps=false`;
-      const data=await fetchJson(url,{headers:{Accept:'application/json'}},4500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
+      const data=await fetchJson(url,{headers:{Accept:'application/json'}},2500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
       const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
       if(points.length<3)throw new Error('rota boş');
       const pack={ok:true,source:'osrm-preline',points,distanceKm:(Number(r.distance)||0)/1000,time:Date.now()};
@@ -4680,8 +4711,8 @@ window.addEventListener('load',()=>{
   }
   async function checkByVercelApi(dest,cands,opts){
     const origin={lat:num(userPos?.lat,40.840621),lon:num(userPos?.lon,31.152219)};
-    const payload={origin,destination:{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)},emergencyMode:!!opts?.emergencyMode,minProgress:opts?.emergencyMode?0:0.006,maxRouteDeviationKm:opts?.emergencyMode?30:7,maxExtraKm:opts?.emergencyMode?18:undefined,candidates:cands.slice(0,14).map(s=>({id:s.id,name:s.name,address:s.address,brand:s.brand,power:s.power,lat:s.lat,lon:s.lon,routeDeviation:s.routeDeviation,routeProgress:s.routeProgress,alongKm:s.alongKm,routeKw:s.routeKw,originDriveKm:s.originDriveKm})),maxCandidates:14};
-    return await fetchJson(ROUTE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},6000);
+    const payload={origin,destination:{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)},emergencyMode:!!opts?.emergencyMode,minProgress:opts?.emergencyMode?0:0.006,maxRouteDeviationKm:opts?.emergencyMode?30:7,maxExtraKm:opts?.emergencyMode?18:undefined,candidates:cands.slice(0,8).map(s=>({id:s.id,name:s.name,address:s.address,brand:s.brand,power:s.power,lat:s.lat,lon:s.lon,routeDeviation:s.routeDeviation,routeProgress:s.routeProgress,alongKm:s.alongKm,routeKw:s.routeKw,originDriveKm:s.originDriveKm})),maxCandidates:8};
+    return await fetchJson(ROUTE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},2500);
   }
   function chargeTimeRange(kwh,kw){
     kwh=Math.max(0,Number(kwh)||0); kw=Math.max(0,Number(kw)||0); if(kwh<=0)return {min:0,max:0,text:'0 dk'};
@@ -4699,13 +4730,13 @@ window.addEventListener('load',()=>{
   async function elevationStats(points,distanceKm,battery,baseConsumption){
     const enabled=!!q('rp_elevation')?.checked;
     if(!enabled)return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım kapalı'};
-    const pts=samplePoints(points,70); if(pts.length<2)return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım alınamadı'};
+    const pts=samplePoints(points,35); if(pts.length<2)return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım alınamadı'};
     const key='mv_elev_0627_'+pts.map(p=>Number(p.lat).toFixed(2)+','+Number(p.lon).toFixed(2)).join('|');
     let elev=null;
     try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<60*60*1000)elev=c.elev;}catch(_){}
     if(!elev){
       const lat=pts.map(p=>Number(p.lat).toFixed(5)).join(','); const lon=pts.map(p=>Number(p.lon).toFixed(5)).join(',');
-      try{const data=await fetchJson('https://api.open-meteo.com/v1/elevation?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon),{},5000); elev=(data.elevation||[]).map(Number).filter(Number.isFinite); try{sessionStorage.setItem(key,JSON.stringify({time:Date.now(),elev}))}catch(_){}}catch(e){return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım alınamadı'}}
+      try{const data=await fetchJson('https://api.open-meteo.com/v1/elevation?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon),{},2500); elev=(data.elevation||[]).map(Number).filter(Number.isFinite); try{sessionStorage.setItem(key,JSON.stringify({time:Date.now(),elev}))}catch(_){}}catch(e){return {enabled:false,ascent:0,descent:0,elevKwh:0,note:'Rakım alınamadı'}}
     }
     let ascent=0,descent=0; for(let i=1;i<elev.length;i++){const d=elev[i]-elev[i-1]; if(d>3)ascent+=d; else if(d<-3)descent+=-d;}
     const passengers=Math.max(0,Math.min(7,Math.round(num(q('rp_passengers')?.value,0))));
@@ -4739,8 +4770,8 @@ window.addEventListener('load',()=>{
       if(energy>=finishNeedKwh)break;
       const reachableKm=Math.max(0,energy-travelReserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
       let cand;
-      if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,14);}
-      else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,14);}
+      if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,8);}
+      else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,8);}
       if(!cand.length)break;
       let accepted=[]; try{const api=await checkByVercelApi(dest,cand,{emergencyMode:i===0&&lowMode}); accepted=(api.accepted||[]);}catch(e){accepted=[];}
       if(i===0&&lowMode&&!accepted.length){accepted=cand.slice(0,3).map(x=>({...x,emergencyFallback:true}));}
@@ -4800,11 +4831,15 @@ window.addEventListener('load',()=>{
       const battery=val('rp_battery',60),soc=val('rp_soc',45),arrival=val('rp_arrival',10),target=val('rp_charge_target',80);
       const mode=q('rp_mode')?.value||'manual'; const baseConsumption=mode==='wltp'?val('rp_wltp',15):val('rp_manual',18); const price=val('rp_price',val('rp_dc_price',10)),chargeKw=val('rp_kw',val('rp_charge_kw',90));
       const prelim=await baseRoute(dest); const distance=val('rp_distance',prelim.distanceKm||hKm(userPos.lat,userPos.lon,dest.lat,dest.lon)*1.18);
-      const elev=await elevationStats(prelim.points,distance,battery,baseConsumption);
+      const elevPromise=elevationStats(prelim.points,distance,battery,baseConsumption);
+      const quickBaseConsumption=baseConsumption+(q('rp_climate')?.value==='high'?2.4:(q('rp_climate')?.value==='normal'?1.4:(q('rp_climate')?.value==='eco'?0.7:0)))+Math.max(0,Math.min(7,Math.round(num(q('rp_passengers')?.value,0))))*0.35;
+      const startEnergy=battery*soc/100;
+      const firstReach=Math.max(0,(startEnergy-(soc<=15?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018)))/Math.max(quickBaseConsumption,1)*100);
+      const packPromise=preCandidates(dest,firstReach,soc<=15);
+      const elev=await elevPromise;
       const factors=routeFactors(distance,baseConsumption,elev);
       const consumption=factors.adjustedConsumption;
-      const startEnergy=battery*soc/100; const firstReach=Math.max(0,(startEnergy-(soc<=15?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018)))/Math.max(consumption,1)*100);
-      const pack=await preCandidates(dest,firstReach,soc<=15); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
+      const pack=await packPromise; const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
       const energyNeed=distance*consumption/100; const startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
       if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b><br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}</div>`).join('')+'</div>';}
@@ -4821,6 +4856,11 @@ window.addEventListener('load',()=>{
   document.addEventListener('DOMContentLoaded',ensureSmartRouteOptions);
   window.addEventListener('load',ensureSmartRouteOptions);
 })();
+</script>
+
+<script>
+window.addEventListener('load',function(){try{document.documentElement.classList.add('mv-boot-ready')}catch(e){}},{once:true});
+setTimeout(function(){try{document.documentElement.classList.add('mv-boot-ready')}catch(e){}},900);
 </script>
 
 </body>
