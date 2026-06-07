@@ -13,7 +13,9 @@
 <!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
 <!-- UFUK_PASSENGER_DRIVER_EXCLUDED_FIX_0632 -->
 <!-- UFUK_ROUTE_MANUAL_STOP_PICK_0634 -->
-<!-- UFUK_ROUTE_ALTERNATIVE_PATH_PICK_0636 -->
+<!-- UFUK_ROUTE_SAFE_DIRECTION_MAP_0637 -->
+<!-- UFUK_ROUTE_SAFE_DIRECTION_MAP_0637 -->
+<!-- UFUK_ROUTE_FULL_ADDRESS_INPUT_0638 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -738,6 +740,41 @@ html.mv-admin-start .adminOnly{
   display:block!important;
 }
 
+
+/* UFUK_ROUTE_FULL_ADDRESS_INPUT_0638 */
+.routeFullAddressBox{
+  margin-top:10px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.025);
+  border-radius:18px;
+  padding:10px;
+}
+.routeFullAddressBox label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin:0 0 6px;
+}
+.routeFullAddressBox textarea{
+  width:100%;
+  min-height:54px;
+  resize:vertical;
+  background:#091827;
+  border:1px solid var(--line);
+  color:white;
+  border-radius:15px;
+  padding:12px;
+  outline:0;
+  font-size:16px;
+  line-height:1.35;
+}
+.routeFullAddressBox .addrHint{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:6px;
+  line-height:1.35;
+}
+
 </style>
 <script>
 /* UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633: yenilemede yanlış/admin ekranı parlamasını engeller */
@@ -796,6 +833,11 @@ html.mv-admin-start .adminOnly{
             <div class="routeSearchBox">
               <input id="rp_dest" placeholder="İl, ilçe veya tam adres yaz" value="Ankara" autocomplete="off" oninput="routeSuggestInput()" onfocus="routeSuggestInput()">
               <div class="routeSuggest" id="routeSuggest"></div>
+            </div>
+            <div class="routeFullAddressBox">
+              <label>Net açık adres <span class="muted">(isteğe bağlı)</span></label>
+              <textarea id="rp_full_address" placeholder="Örn: Viaport Marina, Cami Mahallesi, Balıkçılar Sokak No:20, Tuzla / İstanbul" autocomplete="street-address" oninput="mvFullAddressTyping0638()"></textarea>
+              <div class="addrHint">Bu alan doluysa rota hesabında il/ilçe yerine bu açık adres hedef alınır.</div>
             </div>
 
             <div class="routeQuickGrid">
@@ -2118,7 +2160,7 @@ function planEvRoute(){
         <p><b>${esc(dest.name||$('rp_dest')?.value||'Hedef')}</b> için ${plan.stops.length} şarj durağı hazırlandı.</p>
         ${plan.warning?`<p class="strongWarn">${esc(plan.warning)}</p>`:''}
         <p>${stopNames}</p>
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b> · Süre: <b>${Math.ceil(plan.totalMin)} dk</b> · Maliyet: <b>${plan.totalCost.toFixed(0)} TL</b></p>
         <div class="routeDirectActions">
           <a href="${mapsUrl}" target="_blank" rel="noopener">Google Haritalar’da aç</a>
@@ -2202,7 +2244,7 @@ function planEvRoute(){
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
 
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
         ${stopHtml}
 
@@ -2360,7 +2402,7 @@ async function planEvRoute(){
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
 
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
         ${stopHtml}
 
@@ -2603,7 +2645,7 @@ async function planEvRoute(){
           <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
         ${stopHtml}
         <div class="routeDirectActions">
@@ -2793,7 +2835,7 @@ async function planEvRoute(){
           <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
         ${stopHtml}
         <div class="routeDirectActions">
@@ -3173,7 +3215,7 @@ async function planEvRoute(){
           <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
           <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
         </div>
-        <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+        <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
         <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
         ${stopHtml}
         <div class="routeDirectActions">
@@ -3429,7 +3471,7 @@ window.addEventListener('load',()=>{
             <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
             <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
           </div>
-          <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+          <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
           <div class="routeDirectActions">
@@ -3756,7 +3798,7 @@ window.addEventListener('load',()=>{
             <div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div>
             <div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div>
           </div>
-          <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+          <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
           <div class="routeDirectActions">
@@ -3980,7 +4022,7 @@ window.addEventListener('load',()=>{
           <h3>Rota hazır</h3>
           <p><b>${e(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${e(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p>
           <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
-          <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+          <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
           <div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">Duraklı Google Haritalar rotasını aç</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div>
@@ -4180,7 +4222,7 @@ window.addEventListener('load',()=>{
           <h3>Rota hazır</h3>
           <p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için hesaplama tamamlandı. Veri kaynağı: <b>${safeEsc(ready.source||'memory')}</b> · İstasyon: <b>${(stations||[]).length}</b></p>
           <div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div>
-          <p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
+          <p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p>
           <p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>
           ${stopHtml}
           <div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">Duraklı Google Haritalar rotasını aç</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div>
@@ -4323,7 +4365,7 @@ window.addEventListener('load',()=>{
       if(plan.stops.length) actionLabel='Duraklı Google Haritalar rotasını aç';
       if(lowSocProblem) actionLabel='Hedef rotasını aç';
       const apiLabel=(plan.provider&&plan.provider!=='api-yok')?plan.provider:(lowSocProblem?'uygun aday yok':'kontrol gerekmedi');
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML=`<div class="routeWarn">Rota kontrolü şu anda cevap vermedi. Lütfen tekrar dene.</div>`; toast('Rota kontrolü cevap vermedi');}
   };
@@ -4442,7 +4484,11 @@ window.addEventListener('load',()=>{
   async function buildPlan(list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw){
     const finalReserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; const usedIds=new Set(); let lowMode=soc<=15; let lastNoCandidate=false;
     for(let i=0;i<6;i++){
-      const travelReserve=(i===0&&lowMode)?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018);
+      // UFUK_ROUTE_SAFE_DIRECTION_MAP_0637: normal sürüşte istasyona varırken minimum %10 güvenlik payı bırak.
+      // Çok düşük şarj acil modunda kullanıcıyı tamamen kilitlememek için daha küçük acil pay kullanılır.
+      const travelReserve=(i===0&&lowMode)
+        ? (soc<=5 ? Math.max(0.20,battery*0.004) : Math.max(0.8,battery*0.025))
+        : Math.max(2.0,battery*0.10);
       const remainingToFinishKm=Math.max(0,(1-progress)*distance);
       const finishNeedKwh=remainingToFinishKm*consumption/100+finalReserve;
       if(energy>=finishNeedKwh)break;
@@ -4499,7 +4545,7 @@ window.addEventListener('load',()=>{
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla güvenli ilk şarj durağı bulunamadı. En yakın şarj noktasına ayrı rota alıp şarj durumunu kontrol etmelisin.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç';
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${safeEsc(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML=`<div class="routeWarn">Rota hesaplama şu anda cevap vermedi. Lütfen tekrar dene.</div>`; toast('Rota hesaplama cevap vermedi');}
   };
@@ -4688,6 +4734,11 @@ window.addEventListener('load',()=>{
 .routeAltBtn.active{background:linear-gradient(135deg,#35ef8d,#12c873);border:0;color:#052112}
 .routeAltToolbar{display:flex;gap:8px;align-items:center;margin-top:8px}
 .routeAltToolbar button{flex:1}
+.routeAltActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.routeMapBtn{width:100%;border:1px solid rgba(57,170,255,.22);background:rgba(57,170,255,.08);color:#dff2ff;border-radius:14px;padding:10px;font-weight:900}
+.routeSafetyNote{border:1px solid rgba(255,224,129,.24);background:rgba(255,224,129,.07);color:#ffe9a6;border-radius:16px;padding:10px;margin:10px 0;font-size:12px;line-height:1.35}
+@media(max-width:370px){.routeAltActions{grid-template-columns:1fr}}
+
 </style>
 <script>
 /* UFUK_ROUTE_ELEVATION_PASSENGER_CLIMATE_FORCE80_0627
@@ -4695,7 +4746,7 @@ window.addEventListener('load',()=>{
    Google key gerektirmez; rakım için Open-Meteo Elevation, rota için mevcut OSRM/Vercel yapısı kullanılır.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_ROUTE_ALTERNATIVE_PATH_PICK_0636';
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_SAFE_DIRECTION_MAP_0637';
   const ROUTE_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function esc2(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
@@ -4874,7 +4925,11 @@ window.addEventListener('load',()=>{
     const finalReserve=battery*Math.max(0,arrival)/100; let energy=battery*Math.max(0,soc)/100; let progress=0; const stops=[]; const usedIds=new Set(); let lowMode=soc<=15;
     const force80=!!opts?.force80; const forceLimitPct=80; const forceLimitEnergy=battery*forceLimitPct/100;
     for(let i=0;i<14;i++){
-      const travelReserve=(i===0&&lowMode)?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018);
+      // UFUK_ROUTE_SAFE_DIRECTION_MAP_0637: normal sürüşte istasyona varırken minimum %10 güvenlik payı bırak.
+      // Çok düşük şarj acil modunda kullanıcıyı tamamen kilitlememek için daha küçük acil pay kullanılır.
+      const travelReserve=(i===0&&lowMode)
+        ? (soc<=5 ? Math.max(0.20,battery*0.004) : Math.max(0.8,battery*0.025))
+        : Math.max(2.0,battery*0.10);
       const remainingToFinishKm=Math.max(0,(1-progress)*distance);
       const finishNeedKwh=remainingToFinishKm*consumption/100+finalReserve;
       if(energy>=finishNeedKwh)break;
@@ -4973,34 +5028,89 @@ window.addEventListener('load',()=>{
       const battery=val('rp_battery',60),soc=val('rp_soc',45),arrival=val('rp_arrival',10),target=val('rp_charge_target',80);
       const mode=q('rp_mode')?.value||'manual'; const baseConsumption=mode==='wltp'?val('rp_wltp',15):val('rp_manual',18); const price=val('rp_price',val('rp_dc_price',10)),chargeKw=val('rp_kw',val('rp_charge_kw',90));
       const prelim=await baseRoute(dest); const distance=val('rp_distance',prelim.distanceKm||hKm(userPos.lat,userPos.lon,dest.lat,dest.lon)*1.18);
-      const elevPromise=elevationStats(prelim.points,distance,battery,baseConsumption);
+      // UFUK_ROUTE_SAFE_DIRECTION_MAP_0637: gerçek rota mesafesi ekranda kalır, enerji hesabında %8 güvenlik payı kullanılır.
+      const safeDistance=distance*1.08;
+      const elevPromise=elevationStats(prelim.points,safeDistance,battery,baseConsumption);
       const quickBaseConsumption=baseConsumption+(q('rp_climate')?.value==='high'?2.4:(q('rp_climate')?.value==='normal'?1.4:(q('rp_climate')?.value==='eco'?0.7:0)))+Math.max(0,Math.min(7,Math.round(num(q('rp_passengers')?.value,0))))*0.35;
       const startEnergy=battery*soc/100;
-      const firstReach=Math.max(0,(startEnergy-(soc<=15?Math.min(0.5,Math.max(0.15,battery*0.006)):Math.max(1.0,battery*0.018)))/Math.max(quickBaseConsumption,1)*100);
+      const firstReserveForSearch=(soc<=15) ? (soc<=5 ? Math.max(0.20,battery*0.004) : Math.max(0.8,battery*0.025)) : Math.max(2.0,battery*0.10);
+      const firstReach=Math.max(0,(startEnergy-firstReserveForSearch)/Math.max(quickBaseConsumption,1)*100);
       const packPromise=preCandidates(dest,firstReach,soc<=15);
       const elev=await elevPromise;
-      const factors=routeFactors(distance,baseConsumption,elev);
+      const factors=routeFactors(safeDistance,baseConsumption,elev);
       const consumption=factors.adjustedConsumption;
-      const pack=await packPromise; const routePathHtml=routeOptionsHtml(prelim.alternatives||[],Number(prelim.selectedIndex||0)); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
-      const energyNeed=distance*consumption/100; const startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
+      const pack=await packPromise; const routePathHtml=routeOptionsHtml(prelim.alternatives||[],Number(prelim.selectedIndex||0)); const plan=await buildPlan(pack.list,dest,safeDistance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
+      const energyNeed=safeDistance*consumption/100; const startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
-      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b>${s.manualSelected?' <span style="color:#35ef8d">· seçilen mola</span>':''}<br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}</div>`).join('')+'</div>';}
+      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b>${s.manualSelected?' <span style="color:#35ef8d">· seçilen mola</span>':''}<br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}<div class="routeAltActions"><button class="routeMapBtn" onclick="openStationMap&&openStationMap('${esc2(s.id)}',event)">Haritada göster</button><a class="routeAltBtn" href="${typeof routeUrl==='function'?routeUrl(s):('https://www.google.com/maps/search/?api=1&query='+s.lat+','+s.lon)}" target="_blank" rel="noopener">Yol tarifi</a></div></div>`).join('')+'</div>';}
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş yönünde güvenli şarj durağı bulunamadı. Lütfen en yakın güvenli noktaya yönlenmeden önce şarj durumunu kontrol et.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       const climateText={off:'Klima kapalı',eco:'Hafif klima',normal:'Normal klima',high:'Yoğun klima'}[factors.climate]||'Klima';
       const passengerText=factors.passengers>0?`Sürücü + ${factors.passengers} yolcu`:'Sadece sürücü';
-      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${passengerText} · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div>`;
+      const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${passengerText} · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div><div class="routeSafetyNote"><b>Güvenli rota modu açık:</b> Enerji hesabında gerçek rota mesafesine yaklaşık %8 pay eklendi. Şarj durağına varışta en az yaklaşık %10 güvenlik payı bırakmaya çalışır.</div>`;
       const manualMode=!!q('rp_manual_stop')?.checked;
       const selectedId=selectedStopId();
-      const altList=(pack.list||[]).filter(s=>Number(s.routeProgress||0)>0.01&&Number(s.routeProgress||0)<0.98&&Number(s.routeDeviation||0)<=18).sort((a,b)=>(a.routeProgress||0)-(b.routeProgress||0)).slice(0,24);
-      const altHtml=manualMode?`<div class="routeAltList"><h4>Rota üzerindeki şarj istasyonları</h4><p class="muted" style="font-size:12px;margin:0 0 6px">İstersen güzergâh üzerindeki mola noktasını sen seçebilirsin. Seçilen istasyon plana zorunlu durak olarak eklenir; varış şarjı ve %80 kuralı korunur.</p>${selectedId?`<div class="routeAltToolbar"><button class="routeAltBtn" onclick="mvClearRouteStop()">Otomatik seçime dön</button></div>`:''}${altList.length?altList.map((s,idx)=>{const sel=String(s.id)===selectedId;return `<div class="routeAltItem ${sel?'selected':''}"><b>${idx+1}. ${esc2(s.name)}</b><p>${esc2(s.address||'')}<br>Rota ilerleme: <b>%${Math.round((s.routeProgress||0)*100)}</b> · Sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b> · Güç: <b>${esc2(s.power||((s.routeKw||0)?(s.routeKw+' kW'):'kW bilgisi yok'))}</b></p><button class="routeAltBtn ${sel?'active':''}" onclick="mvSelectRouteStop('${esc2(s.id)}')">${sel?'Seçili istasyon':'Bu istasyonu seç'}</button></div>`}).join(''):'<div class="empty">Bu rota üzerinde listelenecek uygun şarj istasyonu bulunamadı.</div>'}</div>`:'';
+      const altList=(pack.list||[]).filter(s=>Number(s.routeProgress||0)>0.01&&Number(s.routeProgress||0)<0.98&&Number(s.routeDeviation||0)<=8).sort((a,b)=>(a.routeProgress||0)-(b.routeProgress||0)).slice(0,24);
+      const altHtml=manualMode?`<div class="routeAltList"><h4>Rota üzerindeki şarj istasyonları</h4><p class="muted" style="font-size:12px;margin:0 0 6px">İstersen güzergâh üzerindeki mola noktasını sen seçebilirsin. Seçilen istasyon plana zorunlu durak olarak eklenir; varış şarjı ve %80 kuralı korunur.</p>${selectedId?`<div class="routeAltToolbar"><button class="routeAltBtn" onclick="mvClearRouteStop()">Otomatik seçime dön</button></div>`:''}${altList.length?altList.map((s,idx)=>{const sel=String(s.id)===selectedId; const kmTo=Math.max(0,Number(s.routeProgress||0)*safeDistance); const arrPct=Math.max(0,Math.min(100,((startEnergy-(kmTo*consumption/100))/Math.max(battery,1))*100)); return `<div class="routeAltItem ${sel?'selected':''}"><b>${idx+1}. ${esc2(s.name)}</b><p>${esc2(s.address||'')}<br>Gidiş yönünde yaklaşık: <b>${Math.round(kmTo)} km sonra</b> · Sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Tahmini varış şarjı: <b>%${Math.round(arrPct)}</b> · Güç: <b>${esc2(s.power||((s.routeKw||0)?(s.routeKw+' kW'):'kW bilgisi yok'))}</b></p><div class="routeAltActions"><button class="routeMapBtn" onclick="openStationMap&&openStationMap('${esc2(s.id)}',event)">Haritada göster</button><button class="routeAltBtn ${sel?'active':''}" onclick="mvSelectRouteStop('${esc2(s.id)}')">${sel?'Seçili istasyon':'Bu istasyonu seç'}</button></div></div>`}).join(''):'<div class="empty">Bu rota üzerinde listelenecek uygun şarj istasyonu bulunamadı.</div>'}</div>`:'';
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç'; if(lowSocProblem)actionLabel='Hedef rotasını aç';
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için ${esc2(routeLabel(Number(prelim.selectedIndex||0)).toLowerCase())} hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}${routePathHtml}${altHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için ${esc2(routeLabel(Number(prelim.selectedIndex||0)).toLowerCase())} hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}${routePathHtml}${altHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML='<div class="routeWarn">Rota kontrolü şu anda cevap vermedi. Lütfen tekrar dene.</div>'; toast('Rota kontrolü cevap vermedi');}
   };
   document.addEventListener('DOMContentLoaded',ensureSmartRouteOptions);
   window.addEventListener('load',ensureSmartRouteOptions);
+})();
+</script>
+
+<script>
+/* UFUK_ROUTE_FULL_ADDRESS_INPUT_0638 */
+(function(){
+  const oldResolve = window.resolveRouteDestination;
+  function byId(id){return document.getElementById(id)}
+  function cleanAddress(v){return String(v||'').replace(/\s+/g,' ').trim()}
+  window.mvFullAddressTyping0638=function(){
+    try{
+      if(window.routeSelectedDest) window.routeSelectedDest=null;
+      const box=byId('routeSuggest'); if(box){box.classList.remove('show');}
+    }catch(e){}
+  };
+  async function geocodeFullAddress0638(addr){
+    const variants=[addr, addr+', Türkiye'];
+    for(const q of variants){
+      try{
+        const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=tr&addressdetails=1&q='+encodeURIComponent(q);
+        const res=await fetch(url,{headers:{'Accept':'application/json'}});
+        const data=await res.json();
+        const first=Array.isArray(data)?data[0]:null;
+        if(first&&isFinite(parseFloat(first.lat))&&isFinite(parseFloat(first.lon))){
+          return {
+            name: addr,
+            lat: parseFloat(first.lat),
+            lon: parseFloat(first.lon),
+            sub: first.display_name||addr,
+            type: 'full-address'
+          };
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  window.resolveRouteDestination=async function(){
+    const full=cleanAddress(byId('rp_full_address')&&byId('rp_full_address').value);
+    if(full){
+      if(window.routeSelectedDest && window.routeSelectedDest.type==='full-address' && window.routeSelectedDest.name===full){
+        return window.routeSelectedDest;
+      }
+      const found=await geocodeFullAddress0638(full);
+      if(found){
+        window.routeSelectedDest=found;
+        return found;
+      }
+      // Açık adres çözülemezse eski il/ilçe alanına düş, sistemi bozma.
+    }
+    if(typeof oldResolve==='function') return oldResolve();
+    return {name:(byId('rp_dest')&&byId('rp_dest').value)||'Ankara',lat:39.9334,lon:32.8597,sub:'Varsayılan hedef'};
+  };
 })();
 </script>
 
