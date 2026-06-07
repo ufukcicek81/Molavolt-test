@@ -12,6 +12,8 @@
 <!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
 <!-- UFUK_FORCE80_HARD_CAP_80_MULTISTOP_FIX_0631 -->
 <!-- UFUK_PASSENGER_DRIVER_EXCLUDED_FIX_0632 -->
+<!-- UFUK_ROUTE_MANUAL_STOP_PICK_0634 -->
+<!-- UFUK_ROUTE_ALTERNATIVE_PATH_PICK_0636 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -757,6 +759,7 @@ html.mv-admin-start .adminOnly{
  <link rel="manifest" href="manifest.json?v=0607">
   <meta name="theme-color" content="#07111d">
   <link rel="apple-touch-icon" href="icon-192.png?v=0607">
+<!-- UFUK_ROUTE_MANUAL_STOP_PRIORITY_REPLAN_0635 -->
 </head>
 <body>
 <div id="routeToast" class="routeToast">Rota oluşturuluyor…</div>
@@ -4211,6 +4214,31 @@ window.addEventListener('load',()=>{
   function hKm(a,b,c,d){try{if(typeof km==='function')return km(a,b,c,d)}catch(_){} const R=6371,toRad=x=>x*Math.PI/180; const dLat=toRad(c-a),dLon=toRad(d-b); const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
   function stKw(s){try{if(typeof routePowerKwDirect==='function')return routePowerKwDirect(s)||0}catch(_){} try{if(typeof routePowerKw==='function')return routePowerKw(s)||0}catch(_){} const nums=[...String(s?.power||'').replace(',','.').matchAll(/\d+(\.\d+)?/g)].map(m=>parseFloat(m[0])).filter(Number.isFinite); return nums.length?Math.max(...nums):0;}
   function mapsUrl(dest,stops){const origin=`${userPos.lat},${userPos.lon}`; const destination=`${dest.lat},${dest.lon}`; const waypoints=(stops||[]).slice(0,8).map(s=>`${s.lat},${s.lon}`).join('|'); let url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`; if(waypoints)url+=`&waypoints=${encodeURIComponent(waypoints)}`; return url;}
+  window.mvSelectedRouteStopId=window.mvSelectedRouteStopId||'';
+  window.mvSelectedRouteOption=Number(sessionStorage.getItem('mv_selected_route_option_0636')||window.mvSelectedRouteOption||0)||0;
+  window.mvSelectRouteOption=function(i){
+    window.mvSelectedRouteOption=Math.max(0,Number(i)||0);
+    try{sessionStorage.setItem('mv_selected_route_option_0636',String(window.mvSelectedRouteOption))}catch(_){ }
+    window.mvSelectedRouteStopId='';
+    const sel=q('rp_route_choice'); if(sel)sel.value=String(window.mvSelectedRouteOption);
+    if(typeof routeToast==='function')routeToast('Seçilen güzergâha göre rota yenileniyor…');
+    window.planEvRoute&&window.planEvRoute();
+  };
+  function selectedRouteIndex(){return Math.max(0,Number(q('rp_route_choice')?.value||window.mvSelectedRouteOption||0)||0)}
+  function routeLabel(i){return i===0?'Önerilen / hızlı güzergâh':('Alternatif güzergâh '+i)}
+  function updateRouteChoiceOptions(routes){
+    const sel=q('rp_route_choice'); if(!sel||!Array.isArray(routes)||!routes.length)return;
+    const cur=String(selectedRouteIndex());
+    sel.innerHTML=routes.map((r,i)=>`<option value="${i}">${routeLabel(i)} · ${Math.round(Number(r.distanceKm||0))} km</option>`).join('');
+    if(routes[Number(cur)])sel.value=cur; else {sel.value='0'; window.mvSelectedRouteOption=0;}
+  }
+  function routeOptionsHtml(routes,selected){
+    if(!Array.isArray(routes)||routes.length<=1)return '';
+    return `<div class="routePathList"><h4>Güzergâh seçenekleri</h4><p class="muted" style="font-size:12px;margin:0 0 6px">Önce gideceğin yolu seç. Şarj durakları ve rota üzerindeki istasyonlar seçilen güzergâha göre yeniden hesaplanır.</p>${routes.map((r,i)=>`<div class="routePathItem ${i===selected?'selected':''}"><b>${routeLabel(i)}</b><p>Yaklaşık mesafe: <b>${Math.round(Number(r.distanceKm||0))} km</b>${r.durationMin?` · Süre: <b>${Math.round(r.durationMin)} dk</b>`:''}</p><button class="routeAltBtn ${i===selected?'active':''}" onclick="mvSelectRouteOption(${i})">${i===selected?'Seçili güzergâh':'Bu güzergâhı seç'}</button></div>`).join('')}</div>`;
+  }
+  window.mvSelectRouteStop=function(id){window.mvSelectedRouteStopId=id||''; const cb=q('rp_manual_stop'); if(cb)cb.checked=true; if(typeof routeToast==='function')routeToast('Seçilen istasyona göre rota yenileniyor…'); window.planEvRoute&&window.planEvRoute();};
+  window.mvClearRouteStop=function(){window.mvSelectedRouteStopId=''; if(typeof routeToast==='function')routeToast('Otomatik istasyon seçimi açıldı'); window.planEvRoute&&window.planEvRoute();};
+  function selectedStopId(){return String(window.mvSelectedRouteStopId||'');}
   async function fetchJson(url,opts,ms){const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms||12000); try{const r=await fetch(url,{...(opts||{}),signal:ctl.signal,cache:'no-store'}); const txt=await r.text(); let data; try{data=JSON.parse(txt)}catch(_){data={raw:txt}} if(!r.ok)throw new Error(data?.error||('HTTP '+r.status)); return data;}finally{clearTimeout(t)}}
   async function baseRoute(dest){
     const start={lat:num(userPos?.lat,40.840621),lon:num(userPos?.lon,31.152219)};
@@ -4343,6 +4371,31 @@ window.addEventListener('load',()=>{
   function hKm(a,b,c,d){try{if(typeof km==='function')return km(a,b,c,d)}catch(_){} const R=6371,toRad=x=>x*Math.PI/180; const dLat=toRad(c-a),dLon=toRad(d-b); const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
   function stKw(s){try{if(typeof routePowerKwDirect==='function')return routePowerKwDirect(s)||0}catch(_){} try{if(typeof routePowerKw==='function')return routePowerKw(s)||0}catch(_){} const nums=[...String(s?.power||'').replace(',','.').matchAll(/\d+(\.\d+)?/g)].map(m=>parseFloat(m[0])).filter(Number.isFinite); return nums.length?Math.max(...nums):0;}
   function mapsUrl(dest,stops){const origin=`${userPos.lat},${userPos.lon}`; const destination=`${dest.lat},${dest.lon}`; const waypoints=(stops||[]).slice(0,8).map(s=>`${s.lat},${s.lon}`).join('|'); let url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`; if(waypoints)url+=`&waypoints=${encodeURIComponent(waypoints)}`; return url;}
+  window.mvSelectedRouteStopId=window.mvSelectedRouteStopId||'';
+  window.mvSelectedRouteOption=Number(sessionStorage.getItem('mv_selected_route_option_0636')||window.mvSelectedRouteOption||0)||0;
+  window.mvSelectRouteOption=function(i){
+    window.mvSelectedRouteOption=Math.max(0,Number(i)||0);
+    try{sessionStorage.setItem('mv_selected_route_option_0636',String(window.mvSelectedRouteOption))}catch(_){ }
+    window.mvSelectedRouteStopId='';
+    const sel=q('rp_route_choice'); if(sel)sel.value=String(window.mvSelectedRouteOption);
+    if(typeof routeToast==='function')routeToast('Seçilen güzergâha göre rota yenileniyor…');
+    window.planEvRoute&&window.planEvRoute();
+  };
+  function selectedRouteIndex(){return Math.max(0,Number(q('rp_route_choice')?.value||window.mvSelectedRouteOption||0)||0)}
+  function routeLabel(i){return i===0?'Önerilen / hızlı güzergâh':('Alternatif güzergâh '+i)}
+  function updateRouteChoiceOptions(routes){
+    const sel=q('rp_route_choice'); if(!sel||!Array.isArray(routes)||!routes.length)return;
+    const cur=String(selectedRouteIndex());
+    sel.innerHTML=routes.map((r,i)=>`<option value="${i}">${routeLabel(i)} · ${Math.round(Number(r.distanceKm||0))} km</option>`).join('');
+    if(routes[Number(cur)])sel.value=cur; else {sel.value='0'; window.mvSelectedRouteOption=0;}
+  }
+  function routeOptionsHtml(routes,selected){
+    if(!Array.isArray(routes)||routes.length<=1)return '';
+    return `<div class="routePathList"><h4>Güzergâh seçenekleri</h4><p class="muted" style="font-size:12px;margin:0 0 6px">Önce gideceğin yolu seç. Şarj durakları ve rota üzerindeki istasyonlar seçilen güzergâha göre yeniden hesaplanır.</p>${routes.map((r,i)=>`<div class="routePathItem ${i===selected?'selected':''}"><b>${routeLabel(i)}</b><p>Yaklaşık mesafe: <b>${Math.round(Number(r.distanceKm||0))} km</b>${r.durationMin?` · Süre: <b>${Math.round(r.durationMin)} dk</b>`:''}</p><button class="routeAltBtn ${i===selected?'active':''}" onclick="mvSelectRouteOption(${i})">${i===selected?'Seçili güzergâh':'Bu güzergâhı seç'}</button></div>`).join('')}</div>`;
+  }
+  window.mvSelectRouteStop=function(id){window.mvSelectedRouteStopId=id||''; const cb=q('rp_manual_stop'); if(cb)cb.checked=true; if(typeof routeToast==='function')routeToast('Seçilen istasyona göre rota yenileniyor…'); window.planEvRoute&&window.planEvRoute();};
+  window.mvClearRouteStop=function(){window.mvSelectedRouteStopId=''; if(typeof routeToast==='function')routeToast('Otomatik istasyon seçimi açıldı'); window.planEvRoute&&window.planEvRoute();};
+  function selectedStopId(){return String(window.mvSelectedRouteStopId||'');}
   async function fetchJson(url,opts,ms){const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms||9000); try{const r=await fetch(url,{...(opts||{}),signal:ctl.signal,cache:'no-store'}); const txt=await r.text(); let data; try{data=JSON.parse(txt)}catch(_){data={raw:txt}} if(!r.ok)throw new Error(data?.error||('HTTP '+r.status)); return data;}finally{clearTimeout(t)}}
   async function baseRoute(dest){
     const start={lat:num(userPos?.lat,40.840621),lon:num(userPos?.lon,31.152219)};
@@ -4404,6 +4457,9 @@ window.addEventListener('load',()=>{
       accepted=accepted.filter(s=>!usedIds.has(s.id));
       if(!accepted.length){lastNoCandidate=true; break;}
       accepted.sort((a,b)=>{const sc=s=> i===0&&lowMode ? (-(s.originDriveKm||999)*8-Math.max(0,s.extraKm||0)*6-Math.max(0,s.routeDeviation||0)*2+Math.min(15,(s.routeKw||0)/8)) : (((s.routeProgress-progress)*150)-Math.max(0,s.extraKm||0)*120-Math.pow(Math.max(0,s.routeDeviation||0),1.35)*30+Math.min(18,(s.routeKw||0)/8)); return sc(b)-sc(a);});
+      const manualChosenId=selectedStopId();
+      const manualAcceptedIndex=manualChosenId?accepted.findIndex(x=>String(x.id)===manualChosenId):-1;
+      if(manualAcceptedIndex>0){accepted.unshift(accepted.splice(manualAcceptedIndex,1)[0]);}
       const stop={...accepted[0]}; usedIds.add(stop.id);
       const segKm=(i===0&&lowMode)?Math.max(0,stop.leg1Km||stop.originDriveKm||((stop.routeProgress-progress)*distance)):Math.max(0,(stop.routeProgress-progress)*distance);
       const used=segKm*consumption/100; const arrivalEnergy=Math.max(0,energy-used);
@@ -4622,6 +4678,16 @@ window.addEventListener('load',()=>{
 .routeToggleLine input{width:18px!important;height:18px!important;margin:0!important;accent-color:#35ef8d}
 .routeEffectNote{border:1px solid rgba(53,239,141,.20);background:rgba(53,239,141,.06);border-radius:16px;padding:10px;margin:10px 0;color:#dfffea;line-height:1.35;font-size:13px}
 @media(max-width:390px){.routeSmartGrid{grid-template-columns:1fr}}
+.routeAltList{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}
+.routeAltList h4{margin:0 0 8px;font-size:16px;color:#eaf4ff}
+.routeAltItem{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);border-radius:17px;padding:11px;margin-top:8px}
+.routeAltItem.selected{border-color:rgba(53,239,141,.38);background:rgba(53,239,141,.08)}
+.routeAltItem b{display:block;font-size:15px;line-height:1.25}
+.routeAltItem p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.35}
+.routeAltBtn{width:100%;margin-top:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#eaf4ff;border-radius:14px;padding:10px;font-weight:900}
+.routeAltBtn.active{background:linear-gradient(135deg,#35ef8d,#12c873);border:0;color:#052112}
+.routeAltToolbar{display:flex;gap:8px;align-items:center;margin-top:8px}
+.routeAltToolbar button{flex:1}
 </style>
 <script>
 /* UFUK_ROUTE_ELEVATION_PASSENGER_CLIMATE_FORCE80_0627
@@ -4629,7 +4695,7 @@ window.addEventListener('load',()=>{
    Google key gerektirmez; rakım için Open-Meteo Elevation, rota için mevcut OSRM/Vercel yapısı kullanılır.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633';
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_ALTERNATIVE_PATH_PICK_0636';
   const ROUTE_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function esc2(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
@@ -4639,6 +4705,31 @@ window.addEventListener('load',()=>{
   function hKm(a,b,c,d){try{if(typeof km==='function')return km(a,b,c,d)}catch(_){} const R=6371,toRad=x=>x*Math.PI/180; const dLat=toRad(c-a),dLon=toRad(d-b); const x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
   function stKw(s){try{if(typeof routePowerKwDirect==='function')return routePowerKwDirect(s)||0}catch(_){} try{if(typeof routePowerKw==='function')return routePowerKw(s)||0}catch(_){} const nums=[...String(s?.power||'').replace(',','.').matchAll(/\d+(\.\d+)?/g)].map(m=>parseFloat(m[0])).filter(Number.isFinite); return nums.length?Math.max(...nums):0;}
   function mapsUrl(dest,stops){const origin=`${userPos.lat},${userPos.lon}`; const destination=`${dest.lat},${dest.lon}`; const waypoints=(stops||[]).slice(0,8).map(s=>`${s.lat},${s.lon}`).join('|'); let url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`; if(waypoints)url+=`&waypoints=${encodeURIComponent(waypoints)}`; return url;}
+  window.mvSelectedRouteStopId=window.mvSelectedRouteStopId||'';
+  window.mvSelectedRouteOption=Number(sessionStorage.getItem('mv_selected_route_option_0636')||window.mvSelectedRouteOption||0)||0;
+  window.mvSelectRouteOption=function(i){
+    window.mvSelectedRouteOption=Math.max(0,Number(i)||0);
+    try{sessionStorage.setItem('mv_selected_route_option_0636',String(window.mvSelectedRouteOption))}catch(_){ }
+    window.mvSelectedRouteStopId='';
+    const sel=q('rp_route_choice'); if(sel)sel.value=String(window.mvSelectedRouteOption);
+    if(typeof routeToast==='function')routeToast('Seçilen güzergâha göre rota yenileniyor…');
+    window.planEvRoute&&window.planEvRoute();
+  };
+  function selectedRouteIndex(){return Math.max(0,Number(q('rp_route_choice')?.value||window.mvSelectedRouteOption||0)||0)}
+  function routeLabel(i){return i===0?'Önerilen / hızlı güzergâh':('Alternatif güzergâh '+i)}
+  function updateRouteChoiceOptions(routes){
+    const sel=q('rp_route_choice'); if(!sel||!Array.isArray(routes)||!routes.length)return;
+    const cur=String(selectedRouteIndex());
+    sel.innerHTML=routes.map((r,i)=>`<option value="${i}">${routeLabel(i)} · ${Math.round(Number(r.distanceKm||0))} km</option>`).join('');
+    if(routes[Number(cur)])sel.value=cur; else {sel.value='0'; window.mvSelectedRouteOption=0;}
+  }
+  function routeOptionsHtml(routes,selected){
+    if(!Array.isArray(routes)||routes.length<=1)return '';
+    return `<div class="routePathList"><h4>Güzergâh seçenekleri</h4><p class="muted" style="font-size:12px;margin:0 0 6px">Önce gideceğin yolu seç. Şarj durakları ve rota üzerindeki istasyonlar seçilen güzergâha göre yeniden hesaplanır.</p>${routes.map((r,i)=>`<div class="routePathItem ${i===selected?'selected':''}"><b>${routeLabel(i)}</b><p>Yaklaşık mesafe: <b>${Math.round(Number(r.distanceKm||0))} km</b>${r.durationMin?` · Süre: <b>${Math.round(r.durationMin)} dk</b>`:''}</p><button class="routeAltBtn ${i===selected?'active':''}" onclick="mvSelectRouteOption(${i})">${i===selected?'Seçili güzergâh':'Bu güzergâhı seç'}</button></div>`).join('')}</div>`;
+  }
+  window.mvSelectRouteStop=function(id){window.mvSelectedRouteStopId=id||''; const cb=q('rp_manual_stop'); if(cb)cb.checked=true; if(typeof routeToast==='function')routeToast('Seçilen istasyona göre rota yenileniyor…'); window.planEvRoute&&window.planEvRoute();};
+  window.mvClearRouteStop=function(){window.mvSelectedRouteStopId=''; if(typeof routeToast==='function')routeToast('Otomatik istasyon seçimi açıldı'); window.planEvRoute&&window.planEvRoute();};
+  function selectedStopId(){return String(window.mvSelectedRouteStopId||'');}
   async function fetchJson(url,opts,ms){const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),ms||9000); try{const r=await fetch(url,{...(opts||{}),signal:ctl.signal,cache:'no-store'}); const txt=await r.text(); let data; try{data=JSON.parse(txt)}catch(_){data={raw:txt}} if(!r.ok)throw new Error(data?.error||('HTTP '+r.status)); return data;}finally{clearTimeout(t)}}
 
   function ensureSmartRouteOptions(){
@@ -4649,28 +4740,47 @@ window.addEventListener('load',()=>{
     box.id='rp_smart_options';
     box.innerHTML=`
       <h4>Akıllı rota hesabı</h4>
+      <label>Güzergâh tercihi</label><select id="rp_route_choice" onchange="mvSelectRouteOption(this.value)"><option value="0">Önerilen / hızlı güzergâh</option></select>
       <label class="routeToggleLine"><input id="rp_elevation" type="checkbox" checked> Rakım farkını hesaba kat</label>
       <div class="routeSmartGrid">
         <div><label>Sürücü hariç yolcu</label><input id="rp_passengers" type="number" inputmode="numeric" min="0" max="7" value="0"></div>
         <div><label>Klima kullanımı</label><select id="rp_climate"><option value="off">Kapalı</option><option value="eco">Hafif</option><option value="normal" selected>Normal</option><option value="high">Yoğun</option></select></div>
       </div>
       <label class="routeToggleLine"><input id="rp_force80" type="checkbox"> Her molada %80’e kadar şarj et</label>
+      <label class="routeToggleLine"><input id="rp_manual_stop" type="checkbox"> Rota üzerindeki istasyonları listele, ben seçeyim</label>
       <p class="muted" style="font-size:12px;margin:8px 0 0">İstersen kapatabilirsin. Kapalıyken sistem yetecek kadar şarj planlar.</p>`;
     adv.appendChild(box);
   }
 
-  async function baseRoute(dest){
+  async function fetchRouteAlternatives(dest){
     const start={lat:num(userPos?.lat,40.840621),lon:num(userPos?.lon,31.152219)};
-    const key='mv_0627_base_'+[start.lat,start.lon,dest.lat,dest.lon].map(x=>Number(x).toFixed(4)).join('_');
-    try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<15*60*1000&&Array.isArray(c.points)&&c.points.length>3)return c;}catch(_){}
+    const key='mv_0636_route_alts_'+[start.lat,start.lon,dest.lat,dest.lon].map(x=>Number(x).toFixed(4)).join('_');
+    try{const c=JSON.parse(sessionStorage.getItem(key)||'null'); if(c&&Date.now()-c.time<15*60*1000&&Array.isArray(c.routes)&&c.routes.length)return c;}catch(_){ }
     try{
-      const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=false&steps=false`;
-      const data=await fetchJson(url,{headers:{Accept:'application/json'}},2500); const r=data?.routes?.[0]; const coords=r?.geometry?.coordinates||[];
-      const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
-      if(points.length<3)throw new Error('rota boş');
-      const pack={ok:true,source:'osrm-preline',points,distanceKm:(Number(r.distance)||0)/1000,time:Date.now()};
-      try{sessionStorage.setItem(key,JSON.stringify(pack))}catch(_){} return pack;
-    }catch(e){return {ok:false,source:'line-preline',points:[start,{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)}],distanceKm:hKm(start.lat,start.lon,dest.lat,dest.lon)*1.18,time:Date.now()}}
+      const url=`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&alternatives=true&steps=false`;
+      const data=await fetchJson(url,{headers:{Accept:'application/json'}},3200);
+      const routes=(data?.routes||[]).slice(0,3).map((r,i)=>{
+        const coords=r?.geometry?.coordinates||[];
+        const points=coords.map(c=>({lat:Number(c[1]),lon:Number(c[0])})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
+        return {ok:points.length>2,source:'osrm-alt-'+i,index:i,points,distanceKm:(Number(r.distance)||0)/1000,durationMin:(Number(r.duration)||0)/60,time:Date.now()};
+      }).filter(r=>r.ok);
+      if(!routes.length)throw new Error('alternatif rota yok');
+      const pack={ok:true,source:'osrm-alternatives',routes,time:Date.now()};
+      try{sessionStorage.setItem(key,JSON.stringify(pack))}catch(_){ }
+      return pack;
+    }catch(e){
+      const line={ok:false,source:'line-preline',index:0,points:[start,{lat:num(dest.lat,39.9334),lon:num(dest.lon,32.8597)}],distanceKm:hKm(start.lat,start.lon,dest.lat,dest.lon)*1.18,durationMin:0,time:Date.now()};
+      return {ok:false,source:'line-fallback',routes:[line],time:Date.now()};
+    }
+  }
+  async function baseRoute(dest){
+    const pack=await fetchRouteAlternatives(dest);
+    updateRouteChoiceOptions(pack.routes);
+    let idx=selectedRouteIndex();
+    if(!pack.routes[idx])idx=0;
+    window.mvSelectedRouteOption=idx;
+    const r=pack.routes[idx]||pack.routes[0];
+    return {...r,alternatives:pack.routes,selectedIndex:idx,source:pack.source||r.source};
   }
   function projection(points,p){
     if(!Array.isArray(points)||points.length<2)return{distance:999,progress:0,alongKm:0};
@@ -4770,10 +4880,39 @@ window.addEventListener('load',()=>{
       if(energy>=finishNeedKwh)break;
       const reachableKm=Math.max(0,energy-travelReserve)/Math.max(consumption,1)*100; const maxProgress=progress+(reachableKm/Math.max(distance,1));
       let cand;
-      if(i===0&&lowMode){cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4)).sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,8);}
-      else{cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004).sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,8);}
+      const manualId=selectedStopId();
+      const manualTarget=manualId?list.find(x=>String(x.id)===manualId):null;
+      const manualPending=!!(manualTarget && !usedIds.has(manualTarget.id) && Number(manualTarget.routeProgress||0)>progress+0.003);
+      const manualReachable=manualPending && ((i===0&&lowMode)
+        ? Number(manualTarget.originDriveKm||999999)<=Math.max(6,reachableKm*1.75+4)
+        : Number(manualTarget.routeProgress||0)<=maxProgress+0.004);
+
+      if(i===0&&lowMode){
+        cand=list.filter(s=>!usedIds.has(s.id)&&s.originDriveKm<=Math.max(6,reachableKm*1.75+4));
+        if(manualPending && !manualReachable){
+          cand=cand.filter(s=>Number(s.routeProgress||0)<Number(manualTarget.routeProgress||0)-0.002);
+        }
+        cand=cand.sort((a,b)=>{const sc=s=>-(s.originDriveKm||999)*7-Math.max(0,s.routeDeviation||0)*2+Math.min(12,(s.routeKw||0)/10)+(s.routeProgress||0)*18;return sc(b)-sc(a);}).slice(0,8);
+      }
+      else{
+        cand=list.filter(s=>!usedIds.has(s.id)&&s.routeProgress>progress+0.004&&s.routeProgress<=maxProgress+0.004);
+        if(manualPending && !manualReachable){
+          cand=cand.filter(s=>Number(s.routeProgress||0)<Number(manualTarget.routeProgress||0)-0.002);
+        }
+        cand=cand.sort((a,b)=>{const sc=s=>((s.routeProgress-progress)*170)-Math.pow(Math.max(0,s.routeDeviation),1.45)*35+Math.min(18,(s.routeKw||0)/8); return sc(b)-sc(a);}).slice(0,8);
+      }
+
+      // UFUK_ROUTE_MANUAL_STOP_PRIORITY_REPLAN_0635:
+      // Kullanıcı rota üzerindeki bir istasyonu seçtiyse, sistem o istasyonu plana zorunlu durak olarak alır.
+      // Seçilen durak mevcut şarjla ulaşılamıyorsa önce ona gelmeden önceki otomatik molaları hesaplar,
+      // sonra seçilen istasyona uğrar. Böylece varışta kalacak % şarj, rakım, yolcu, klima ve %80 kuralı bozulmaz.
+      if(manualReachable){
+        cand=[{...manualTarget,manualSelected:true},...cand.filter(x=>String(x.id)!==manualId)];
+      }
       if(!cand.length)break;
+      const manualCand=manualId?cand.find(x=>String(x.id)===manualId):null;
       let accepted=[]; try{const api=await checkByVercelApi(dest,cand,{emergencyMode:i===0&&lowMode}); accepted=(api.accepted||[]);}catch(e){accepted=[];}
+      if(manualCand && !accepted.some(x=>String(x.id)===manualId)){accepted=[{...manualCand,manualSelected:true},...accepted];}
       if(i===0&&lowMode&&!accepted.length){accepted=cand.slice(0,3).map(x=>({...x,emergencyFallback:true}));}
       // UFUK_LONG_ROUTE_OSRM_FALLBACK_0628: OSRM/Vercel bazen uzun rotalarda adayları fazla sert eliyor.
       // API aday döndürmezse sistem 0 durakta kalmasın; gidiş hattına yakın ve erişilebilir en iyi adaylardan güvenli yedek seç.
@@ -4785,6 +4924,9 @@ window.addEventListener('load',()=>{
       }
       accepted=accepted.filter(s=>!usedIds.has(s.id)); if(!accepted.length)break;
       accepted.sort((a,b)=>{const sc=s=> i===0&&lowMode ? (-(s.originDriveKm||999)*8-Math.max(0,s.extraKm||0)*6-Math.max(0,s.routeDeviation||0)*2+Math.min(15,(s.routeKw||0)/8)) : (((s.routeProgress-progress)*150)-Math.max(0,s.extraKm||0)*120-Math.pow(Math.max(0,s.routeDeviation||0),1.35)*30+Math.min(18,(s.routeKw||0)/8)); return sc(b)-sc(a);});
+      const manualChosenId=selectedStopId();
+      const manualAcceptedIndex=manualChosenId?accepted.findIndex(x=>String(x.id)===manualChosenId):-1;
+      if(manualAcceptedIndex>0){accepted.unshift(accepted.splice(manualAcceptedIndex,1)[0]);}
       const stop={...accepted[0]}; usedIds.add(stop.id);
       const segKm=(i===0&&lowMode)?Math.max(0,stop.leg1Km||stop.originDriveKm||((stop.routeProgress-progress)*distance)):Math.max(0,(stop.routeProgress-progress)*distance);
       const used=segKm*consumption/100; const arrivalEnergy=Math.max(0,energy-used);
@@ -4839,17 +4981,21 @@ window.addEventListener('load',()=>{
       const elev=await elevPromise;
       const factors=routeFactors(distance,baseConsumption,elev);
       const consumption=factors.adjustedConsumption;
-      const pack=await packPromise; const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
+      const pack=await packPromise; const routePathHtml=routeOptionsHtml(prelim.alternatives||[],Number(prelim.selectedIndex||0)); const plan=await buildPlan(pack.list,dest,distance,battery,soc,arrival,target,consumption,price,chargeKw,{force80:!!q('rp_force80')?.checked});
       const energyNeed=distance*consumption/100; const startUsable=Math.max(0,startEnergy-Math.max(1.2,battery*0.02)); const lowSocProblem=energyNeed>startUsable&&!plan.stops.length; const url=mapsUrl(dest,plan.stops);
       let stopHtml='';
-      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b><br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}</div>`).join('')+'</div>';}
+      if(plan.stops.length){stopHtml='<div class="routeStopPreview"><b>Önerilen şarj durakları</b>'+plan.stops.map((s,i)=>`<div class="routeStopPreviewItem"><b>${i+1}. ${esc2(s.name)}</b>${s.manualSelected?' <span style="color:#35ef8d">· seçilen mola</span>':''}<br>${esc2(s.address||'')}<br>Yola sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Şarj: <b>${s.chargeKwh.toFixed(1)} kWh</b> · Süre: <b>${s.chargeTimeText||((s.chargeMinLow&&s.chargeMinHigh)?(s.chargeMinLow+'-'+s.chargeMinHigh+' dk'):(s.chargeMin+' dk'))}</b> · Maliyet: <b>${s.cost.toFixed(0)} TL</b>${q('rp_force80')?.checked?`<br>Bu moladan çıkış: <b>%${Math.min(80,Math.round(s.chargeToSoc||80))}</b>`:''}</div>`).join('')+'</div>';}
       else if(lowSocProblem){stopHtml='<p class="strongWarn">Bu şarjla gidiş yönünde güvenli şarj durağı bulunamadı. Lütfen en yakın güvenli noktaya yönlenmeden önce şarj durumunu kontrol et.</p>';}
       else{stopHtml='<p>Bu değerlerle şarj molası gerekmiyor.</p>';}
       const climateText={off:'Klima kapalı',eco:'Hafif klima',normal:'Normal klima',high:'Yoğun klima'}[factors.climate]||'Klima';
       const passengerText=factors.passengers>0?`Sürücü + ${factors.passengers} yolcu`:'Sadece sürücü';
       const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${passengerText} · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div>`;
+      const manualMode=!!q('rp_manual_stop')?.checked;
+      const selectedId=selectedStopId();
+      const altList=(pack.list||[]).filter(s=>Number(s.routeProgress||0)>0.01&&Number(s.routeProgress||0)<0.98&&Number(s.routeDeviation||0)<=18).sort((a,b)=>(a.routeProgress||0)-(b.routeProgress||0)).slice(0,24);
+      const altHtml=manualMode?`<div class="routeAltList"><h4>Rota üzerindeki şarj istasyonları</h4><p class="muted" style="font-size:12px;margin:0 0 6px">İstersen güzergâh üzerindeki mola noktasını sen seçebilirsin. Seçilen istasyon plana zorunlu durak olarak eklenir; varış şarjı ve %80 kuralı korunur.</p>${selectedId?`<div class="routeAltToolbar"><button class="routeAltBtn" onclick="mvClearRouteStop()">Otomatik seçime dön</button></div>`:''}${altList.length?altList.map((s,idx)=>{const sel=String(s.id)===selectedId;return `<div class="routeAltItem ${sel?'selected':''}"><b>${idx+1}. ${esc2(s.name)}</b><p>${esc2(s.address||'')}<br>Rota ilerleme: <b>%${Math.round((s.routeProgress||0)*100)}</b> · Sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b> · Güç: <b>${esc2(s.power||((s.routeKw||0)?(s.routeKw+' kW'):'kW bilgisi yok'))}</b></p><button class="routeAltBtn ${sel?'active':''}" onclick="mvSelectRouteStop('${esc2(s.id)}')">${sel?'Seçili istasyon':'Bu istasyonu seç'}</button></div>`}).join(''):'<div class="empty">Bu rota üzerinde listelenecek uygun şarj istasyonu bulunamadı.</div>'}</div>`:'';
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç'; if(lowSocProblem)actionLabel='Hedef rotasını aç';
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için rota hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için ${esc2(routeLabel(Number(prelim.selectedIndex||0)).toLowerCase())} hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Mesafe: <b>${distance.toFixed(0)} km</b> · Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}${routePathHtml}${altHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML='<div class="routeWarn">Rota kontrolü şu anda cevap vermedi. Lütfen tekrar dene.</div>'; toast('Rota kontrolü cevap vermedi');}
   };
