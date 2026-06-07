@@ -15,6 +15,7 @@
 <!-- UFUK_ROUTE_MANUAL_STOP_PICK_0634 -->
 <!-- UFUK_ROUTE_SAFE_DIRECTION_MAP_0637 -->
 <!-- UFUK_ROUTE_SAFE_DIRECTION_MAP_0637 -->
+<!-- UFUK_ROUTE_STATIONS_MAP_DIRECTION_0639 -->
 <!-- UFUK_ROUTE_FULL_ADDRESS_INPUT_0638 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
@@ -4278,6 +4279,54 @@ window.addEventListener('load',()=>{
     if(!Array.isArray(routes)||routes.length<=1)return '';
     return `<div class="routePathList"><h4>Güzergâh seçenekleri</h4><p class="muted" style="font-size:12px;margin:0 0 6px">Önce gideceğin yolu seç. Şarj durakları ve rota üzerindeki istasyonlar seçilen güzergâha göre yeniden hesaplanır.</p>${routes.map((r,i)=>`<div class="routePathItem ${i===selected?'selected':''}"><b>${routeLabel(i)}</b><p>Yaklaşık mesafe: <b>${Math.round(Number(r.distanceKm||0))} km</b>${r.durationMin?` · Süre: <b>${Math.round(r.durationMin)} dk</b>`:''}</p><button class="routeAltBtn ${i===selected?'active':''}" onclick="mvSelectRouteOption(${i})">${i===selected?'Seçili güzergâh':'Bu güzergâhı seç'}</button></div>`).join('')}</div>`;
   }
+
+  window.mvShowRouteStationsMap=function(){
+    const list=(window.mvLastRouteStationList||[]).filter(s=>s&&Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lon)));
+    if(!list.length){alert('Bu güzergâh üzerinde haritada gösterilecek uygun şarj istasyonu bulunamadı.');return;}
+    const dest=window.mvLastRouteDest||null;
+    const points=window.mvLastRoutePoints||[];
+    try{
+      q('mapModalTitle').textContent='Gidiş yönündeki şarj istasyonları';
+      q('mapModalText').textContent=list.length+' istasyon · Seçilen güzergâha göre listelendi';
+      q('mapModalRoute').href=dest?mapsUrl(dest,[]):'#';
+      q('mapModalRoute').textContent='Hedef rotasını aç';
+    }catch(_){ }
+    if(typeof openModal==='function')openModal('mapModal');
+    setTimeout(function(){
+      try{
+        if(!window.stationMap){
+          window.stationMap=L.map('stationMap',{zoomControl:true,tap:true,dragging:true,touchZoom:true,doubleClickZoom:true,scrollWheelZoom:true}).setView([userPos.lat,userPos.lon],11);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(window.stationMap);
+        }
+        if(window.mvRouteMapLayer){try{window.stationMap.removeLayer(window.mvRouteMapLayer)}catch(_){}}
+        const group=L.layerGroup().addTo(window.stationMap);
+        window.mvRouteMapLayer=group;
+        const bounds=[];
+        if(Array.isArray(points)&&points.length>1){
+          const sampled=points.length>450?points.filter((_,i)=>i%Math.ceil(points.length/450)===0):points;
+          const latlngs=sampled.map(p=>[Number(p.lat),Number(p.lon)]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
+          if(latlngs.length){L.polyline(latlngs,{weight:4,opacity:.75}).addTo(group); latlngs.forEach(p=>bounds.push(p));}
+        }
+        if(userPos&&Number.isFinite(Number(userPos.lat))&&Number.isFinite(Number(userPos.lon))){
+          const here=[Number(userPos.lat),Number(userPos.lon)];
+          L.marker(here).addTo(group).bindPopup('<b>Mevcut konum</b>'); bounds.push(here);
+        }
+        if(dest&&Number.isFinite(Number(dest.lat))&&Number.isFinite(Number(dest.lon))){
+          const end=[Number(dest.lat),Number(dest.lon)];
+          L.marker(end).addTo(group).bindPopup('<b>Hedef</b><br>'+esc2(dest.name||'')); bounds.push(end);
+        }
+        list.slice(0,120).forEach((s,idx)=>{
+          const ll=[Number(s.lat),Number(s.lon)]; bounds.push(ll);
+          const kmTo=Number(s.alongKm||0);
+          const popup='<b>'+(idx+1)+'. '+esc2(s.name||'İstasyon')+'</b><br>'+esc2(s.brand||'')+' · '+esc2(s.power||'kW bilgisi yok')+'<br>Rota üzerinde yaklaşık: '+Math.round(kmTo)+' km sonra<br>Sapma: '+Number(s.routeDeviation||0).toFixed(1)+' km<br><button style="margin-top:6px;border:0;border-radius:10px;padding:7px 10px;font-weight:800;background:#35ef8d;color:#052112" onclick="mvSelectRouteStop(\''+String(s.id).replace(/'/g,'')+'\')">Bu istasyonu seç</button>';
+          L.marker(ll).addTo(group).bindPopup(popup);
+        });
+        if(bounds.length){window.stationMap.fitBounds(bounds,{padding:[24,24],maxZoom:13});}
+        setTimeout(()=>window.stationMap.invalidateSize(),180);
+      }catch(err){console.error(err); alert('Harita açılırken sorun oluştu.');}
+    },180);
+  };
+
   window.mvSelectRouteStop=function(id){window.mvSelectedRouteStopId=id||''; const cb=q('rp_manual_stop'); if(cb)cb.checked=true; if(typeof routeToast==='function')routeToast('Seçilen istasyona göre rota yenileniyor…'); window.planEvRoute&&window.planEvRoute();};
   window.mvClearRouteStop=function(){window.mvSelectedRouteStopId=''; if(typeof routeToast==='function')routeToast('Otomatik istasyon seçimi açıldı'); window.planEvRoute&&window.planEvRoute();};
   function selectedStopId(){return String(window.mvSelectedRouteStopId||'');}
@@ -4736,6 +4785,10 @@ window.addEventListener('load',()=>{
 .routeAltToolbar button{flex:1}
 .routeAltActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
 .routeMapBtn{width:100%;border:1px solid rgba(57,170,255,.22);background:rgba(57,170,255,.08);color:#dff2ff;border-radius:14px;padding:10px;font-weight:900}
+
+.routeMapAllBox{margin-top:12px;border:1px solid rgba(57,170,255,.20);background:rgba(57,170,255,.065);border-radius:18px;padding:11px}
+.routeMapAllBox p{margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.35}
+.routeMapAllBtn{width:100%;border:0;border-radius:15px;padding:12px 13px;background:linear-gradient(135deg,#39aaff,#35ef8d);color:#04151c;font-weight:900;font-size:14px}
 .routeSafetyNote{border:1px solid rgba(255,224,129,.24);background:rgba(255,224,129,.07);color:#ffe9a6;border-radius:16px;padding:10px;margin:10px 0;font-size:12px;line-height:1.35}
 @media(max-width:370px){.routeAltActions{grid-template-columns:1fr}}
 
@@ -4746,7 +4799,7 @@ window.addEventListener('load',()=>{
    Google key gerektirmez; rakım için Open-Meteo Elevation, rota için mevcut OSRM/Vercel yapısı kullanılır.
 */
 (function(){
-  const ROUTE_FIX_VERSION='UFUK_ROUTE_SAFE_DIRECTION_MAP_0637';
+  const ROUTE_FIX_VERSION='UFUK_ROUTE_STATIONS_MAP_DIRECTION_0639';
   const ROUTE_API='https://molavolt-route-api.vercel.app/api/route-check';
   function q(id){return document.getElementById(id)}
   function esc2(t){try{return typeof esc==='function'?esc(t):String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}catch(_){return String(t??'')}}
@@ -5050,10 +5103,11 @@ window.addEventListener('load',()=>{
       const effectHtml=`<div class="routeEffectNote"><b>Akıllı tüketim hesabı:</b> ${passengerText} · ${climateText}${elev.enabled?` · ${elev.note}`:''}<br>Ortalama tüketim: <b>${baseConsumption.toFixed(1)}</b> → <b>${consumption.toFixed(1)} kWh/100 km</b>${q('rp_force80')?.checked?' · Her molada en fazla %80 hedeflendi':''}</div><div class="routeSafetyNote"><b>Güvenli rota modu açık:</b> Enerji hesabında gerçek rota mesafesine yaklaşık %8 pay eklendi. Şarj durağına varışta en az yaklaşık %10 güvenlik payı bırakmaya çalışır.</div>`;
       const manualMode=!!q('rp_manual_stop')?.checked;
       const selectedId=selectedStopId();
-      const altList=(pack.list||[]).filter(s=>Number(s.routeProgress||0)>0.01&&Number(s.routeProgress||0)<0.98&&Number(s.routeDeviation||0)<=8).sort((a,b)=>(a.routeProgress||0)-(b.routeProgress||0)).slice(0,24);
+      const altList=(pack.list||[]).filter(s=>Number(s.routeProgress||0)>0.01&&Number(s.routeProgress||0)<0.98&&Number(s.routeDeviation||0)<=8).sort((a,b)=>(a.routeProgress||0)-(b.routeProgress||0)).slice(0,80); window.mvLastRouteStationList=altList; window.mvLastRouteDest=dest; window.mvLastRoutePoints=prelim.points||[];
       const altHtml=manualMode?`<div class="routeAltList"><h4>Rota üzerindeki şarj istasyonları</h4><p class="muted" style="font-size:12px;margin:0 0 6px">İstersen güzergâh üzerindeki mola noktasını sen seçebilirsin. Seçilen istasyon plana zorunlu durak olarak eklenir; varış şarjı ve %80 kuralı korunur.</p>${selectedId?`<div class="routeAltToolbar"><button class="routeAltBtn" onclick="mvClearRouteStop()">Otomatik seçime dön</button></div>`:''}${altList.length?altList.map((s,idx)=>{const sel=String(s.id)===selectedId; const kmTo=Math.max(0,Number(s.routeProgress||0)*safeDistance); const arrPct=Math.max(0,Math.min(100,((startEnergy-(kmTo*consumption/100))/Math.max(battery,1))*100)); return `<div class="routeAltItem ${sel?'selected':''}"><b>${idx+1}. ${esc2(s.name)}</b><p>${esc2(s.address||'')}<br>Gidiş yönünde yaklaşık: <b>${Math.round(kmTo)} km sonra</b> · Sapma: <b>${num(s.routeDeviation,0).toFixed(1)} km</b><br>Tahmini varış şarjı: <b>%${Math.round(arrPct)}</b> · Güç: <b>${esc2(s.power||((s.routeKw||0)?(s.routeKw+' kW'):'kW bilgisi yok'))}</b></p><div class="routeAltActions"><button class="routeMapBtn" onclick="openStationMap&&openStationMap('${esc2(s.id)}',event)">Haritada göster</button><button class="routeAltBtn ${sel?'active':''}" onclick="mvSelectRouteStop('${esc2(s.id)}')">${sel?'Seçili istasyon':'Bu istasyonu seç'}</button></div></div>`}).join(''):'<div class="empty">Bu rota üzerinde listelenecek uygun şarj istasyonu bulunamadı.</div>'}</div>`:'';
+      const routeMapAllHtml=`<div class="routeMapAllBox"><button class="routeMapAllBtn" onclick="mvShowRouteStationsMap()">Gidiş yönündeki istasyonları haritada göster</button><p>Seçilen güzergâh üzerindeki uygun şarj istasyonlarını haritada gör, istediğini seç.</p></div>`;
       let actionLabel=plan.stops.length?'Duraklı Google Haritalar rotasını aç':'Google Haritalar’da hedef rotasını aç'; if(lowSocProblem)actionLabel='Hedef rotasını aç';
-      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için ${esc2(routeLabel(Number(prelim.selectedIndex||0)).toLowerCase())} hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}${routePathHtml}${altHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
+      if(out){out.innerHTML=`<div class="routeDirectCard ready ${lowSocProblem?'warning':''}"><h3>Rota hazır</h3><p><b>${esc2(dest.name||q('rp_dest')?.value||'Hedef')}</b> için ${esc2(routeLabel(Number(prelim.selectedIndex||0)).toLowerCase())} hesaplandı.</p><div class="routeMainSummary"><div><span>Durak</span><b>${plan.stops.length}</b></div><div><span>Şarj süresi</span><b>${plan.totalTimeText||Math.ceil(plan.totalMin)+' dk'}</b></div><div><span>Maliyet</span><b>${plan.totalCost.toFixed(0)} TL</b></div></div><p>Rota mesafesi: <b>${distance.toFixed(0)} km</b> · Güvenli hesap: <b>${safeDistance.toFixed(0)} km</b><br>Gerekli enerji: <b>${energyNeed.toFixed(1)} kWh</b> · Başlangıç enerji: <b>${startEnergy.toFixed(1)} kWh</b></p><p>Toplam şarj: <b>${plan.totalKwh.toFixed(1)} kWh</b></p>${effectHtml}${stopHtml}${routePathHtml}${routeMapAllHtml}${altHtml}<div class="routeDirectActions"><a href="${url}" target="_blank" rel="noopener">${actionLabel}</a><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url.replaceAll("'","%27")}');routeToast('Rota linki kopyalandı')">Linki kopyala</button></div><div class="routeVersion" style="display:none">${ROUTE_FIX_VERSION}</div></div>`;}
       toast('Rota hazır.');
     }catch(err){console.error(err); if(out)out.innerHTML='<div class="routeWarn">Rota kontrolü şu anda cevap vermedi. Lütfen tekrar dene.</div>'; toast('Rota kontrolü cevap vermedi');}
   };
