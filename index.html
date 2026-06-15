@@ -18,6 +18,7 @@
 <!-- UFUK_ROUTE_STATIONS_MAP_DIRECTION_0639 -->
 <!-- UFUK_ROUTE_FULL_ADDRESS_INPUT_0638 -->
 <!-- UFUK_ROUTE_ALL_STATIONS_MAP_0640 -->
+<!-- UFUK_ROUTE_ALL_STATIONS_MAP_OPEN_FIX_0641 -->
 <!-- UFUK_IOS_EPDK_OSRM_ROUTE_LOGO_FIX_0607 -->
 <!-- UFUK_IOS_FIREBASE_LOCATION_FIX_0521 -->
 <!-- UFUK_ROUTE_REAL_ROAD_OSRM_FIX_0608 -->
@@ -4295,9 +4296,16 @@ window.addEventListener('load',()=>{
     if(typeof openModal==='function')openModal('mapModal');
     setTimeout(function(){
       try{
+        /* UFUK_ROUTE_ALL_STATIONS_MAP_OPEN_FIX_0641
+           Harita modalı daha önce tek istasyon için açıldıysa aynı Leaflet container tekrar initialize edilmesin.
+           Global stationMap ile window.stationMap senkron tutulur. */
+        try{ if(!window.stationMap && typeof stationMap!=='undefined' && stationMap) window.stationMap=stationMap; }catch(_){ }
         if(!window.stationMap){
           window.stationMap=L.map('stationMap',{zoomControl:true,tap:true,dragging:true,touchZoom:true,doubleClickZoom:true,scrollWheelZoom:true}).setView([userPos.lat,userPos.lon],11);
+          try{ if(typeof stationMap!=='undefined') stationMap=window.stationMap; }catch(_){ }
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(window.stationMap);
+        }else{
+          try{ if(typeof stationMap!=='undefined' && !stationMap) stationMap=window.stationMap; }catch(_){ }
         }
         if(window.mvRouteMapLayer){try{window.stationMap.removeLayer(window.mvRouteMapLayer)}catch(_){}}
         const group=L.layerGroup().addTo(window.stationMap);
@@ -4324,7 +4332,15 @@ window.addEventListener('load',()=>{
         });
         if(bounds.length){window.stationMap.fitBounds(bounds,{padding:[24,24],maxZoom:13});}
         setTimeout(()=>window.stationMap.invalidateSize(),180);
-      }catch(err){console.error(err); alert('Harita açılırken sorun oluştu.');}
+      }catch(err){
+        console.error(err);
+        try{
+          const box=document.getElementById('stationMap');
+          if(box) box.innerHTML='<div class="empty" style="margin:14px">Harita yüklenemedi. Sayfayı yenileyip tekrar dene.</div>';
+          const txt=document.getElementById('mapModalText');
+          if(txt) txt.textContent='Harita yüklenemedi. Tekrar deneyebilirsin.';
+        }catch(_){}
+      }
     },180);
   };
 
