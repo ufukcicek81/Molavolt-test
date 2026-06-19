@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<!-- UFUK_BRAND_OFFER_SINGLE_SEARCH_0645 + UFUK_ROUTE_TOLL_ALWAYS_VISIBLE_0646 + UFUK_FREE_TOLL_REAL_ROUTE_SHAPE_0647 -->
+<!-- UFUK_BRAND_OFFER_SINGLE_SEARCH_0645 + UFUK_ROUTE_TOLL_ALWAYS_VISIBLE_0646 + UFUK_FREE_TOLL_REAL_ROUTE_SHAPE_0647 + UFUK_ROUTE_PRO_MAP_ONLY_ON_ROUTE_0648 + UFUK_ROUTE_BRAND_PINS_CARDS_0649 -->
 <!-- UFUK_ROUTE_MAP_FRESH_CONTAINER_LEAFLET_FIX_0643 -->
 <!-- UFUK_SPONSOR_PACKAGE_PRICE_AND_OFFER_COUNT_FIX_0625 -->
 <!-- UFUK_SPONSOR_CARI_PACKAGES_0624 -->
@@ -6318,6 +6318,962 @@ setTimeout(function(){try{document.documentElement.classList.add('mv-boot-ready'
     var route=q('tab-route');
     if(route && String(route.className||'').indexOf('active')>-1)patchLinks();
   },2500);
+})();
+</script>
+
+
+<style>
+/* UFUK_ROUTE_PRO_MAP_ONLY_ON_ROUTE_0648 */
+.mvProMapSheet0648{
+  width:100%;max-width:430px;margin:0 auto;background:#07111d;border:1px solid rgba(255,255,255,.12);
+  border-bottom:0;border-radius:28px 28px 0 0;padding:16px;max-height:94vh;overflow:auto;
+  box-shadow:0 -18px 50px rgba(0,0,0,.45)
+}
+.mvProMapTop0648{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mvProMapClose0648{
+  width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);color:#fff;font-size:24px;font-weight:900;flex:0 0 44px
+}
+.mvProMapTitle0648{margin:8px 0 6px;font-size:27px;line-height:1.15;color:#edf5ff}
+.mvProMapSub0648{margin:0 0 12px;color:#91a8bf;line-height:1.35}
+.mvProMapStats0648{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mvProMapStat0648{
+  display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 11px;
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#dcecff;font-size:12px;font-weight:800
+}
+.mvProMapHost0648{
+  height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c;position:relative
+}
+.mvProLegend0648{
+  margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px
+}
+.mvProLegendItem0648{
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);border-radius:16px;padding:10px 11px;
+  color:#dcecff;font-size:12px;line-height:1.35
+}
+.mvProLegendDot0648{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;vertical-align:middle}
+.mvProMapActions0648{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mvProMapActions0648 a,.mvProMapActions0648 button{
+  display:block;text-align:center;text-decoration:none;border-radius:999px;padding:13px;font-weight:900
+}
+.mvProMapActions0648 .closeBtn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#edf5ff}
+.mvProMapActions0648 .goBtn{background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112}
+.mvProMapActions0648 .ghostBtn{border:1px solid rgba(255,255,255,.12);background:rgba(57,170,255,.10);color:#dfefff}
+.mvRouteActionBtn0648{
+  display:block;text-align:center;border-radius:17px;padding:13px 14px;text-decoration:none;font-weight:900;
+  background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112!important
+}
+.mvRouteNavBtn0648{
+  display:block;text-align:center;border-radius:17px;padding:13px 14px;text-decoration:none;font-weight:900;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#edf5ff!important
+}
+.mvStartPin0648,.mvEndPin0648,.mvStopPin0648{
+  display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;
+  box-shadow:0 10px 24px rgba(0,0,0,.22)
+}
+.mvStartPin0648{width:18px;height:18px;background:#0b1c2b;border:3px solid #39aaff}
+.mvEndPin0648{width:22px;height:22px;background:#35ef8d;color:#052112;border:2px solid #fff;font-size:12px}
+.mvStopPin0648{
+  min-width:24px;height:24px;padding:0 7px;background:#2f8cff;color:#fff;border:2px solid #fff;font-size:12px
+}
+.mvRouteListNote0648{margin-top:8px;color:#91a8bf;font-size:11px;line-height:1.35}
+.leaflet-popup-content-wrapper{border-radius:16px!important}
+.leaflet-popup-content{margin:12px 14px!important;line-height:1.35!important}
+@media(max-width:390px){
+  .mvProLegend0648,.mvProMapActions0648{grid-template-columns:1fr}
+}
+</style>
+<script>
+/* UFUK_ROUTE_PRO_MAP_ONLY_ON_ROUTE_0648 */
+(function(){
+  function q(id){return document.getElementById(id)}
+  function num(v,d){var x=Number(String(v==null?'':v).replace(',','.'));return Number.isFinite(x)?x:d}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+  function txt(v){return esc(v||'')}
+  function km(a,b,c,d){
+    var R=6371,toRad=function(x){return x*Math.PI/180};
+    var dLat=toRad(c-a),dLon=toRad(d-b);
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function powerKw(s){
+    var direct=num(s&&(s.routeKw||s.kw||s.kW),NaN);
+    if(Number.isFinite(direct))return direct;
+    var t=String((s&&s.power)||'');
+    var m=t.match(/(\d+([.,]\d+)?)/g)||[];
+    var vals=m.map(function(v){return num(v,NaN)}).filter(function(v){return Number.isFinite(v)});
+    return vals.length?Math.max.apply(null,vals):0;
+  }
+  function parseLatLon(str){
+    str=decodeURIComponent(String(str||'')).trim();
+    var a=str.split(',');
+    if(a.length<2)return null;
+    var lat=num(a[0],NaN), lon=num(a[1],NaN);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    return {lat:lat,lon:lon};
+  }
+  function parseWaypointsFromGoogleUrl(url){
+    try{
+      var u=new URL(url,location.href);
+      var raw=u.searchParams.get('waypoints')||'';
+      return raw?raw.split('|').map(parseLatLon).filter(Boolean):[];
+    }catch(e){return []}
+  }
+  function routeDisplayList(raw){
+    raw=(raw||[]).filter(function(s){
+      return s && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon)) &&
+             num(s.routeProgress,0)>0.01 && num(s.routeProgress,0)<0.99;
+    }).sort(function(a,b){
+      var p=num(a.routeProgress,0)-num(b.routeProgress,0);
+      if(Math.abs(p)>0.0001)return p;
+      var d=num(a.routeDeviation,999)-num(b.routeDeviation,999);
+      if(Math.abs(d)>0.0001)return d;
+      return powerKw(b)-powerKw(a);
+    });
+
+    var maxDev = raw.length>600 ? 0.55 : raw.length>300 ? 0.8 : raw.length>160 ? 1.1 : raw.length>80 ? 1.5 : 2.2;
+    raw = raw.filter(function(s){return num(s.routeDeviation,999)<=maxDev});
+
+    var seen={};
+    raw = raw.filter(function(s){
+      var key = (s.name||'')+'|'+Number(s.lat).toFixed(4)+'|'+Number(s.lon).toFixed(4);
+      if(seen[key])return false;
+      seen[key]=1;
+      return true;
+    });
+
+    var bucketCount = raw.length>220 ? 34 : raw.length>120 ? 28 : raw.length>60 ? 22 : 16;
+    var buckets = Array.from({length:bucketCount}, function(){return []});
+    raw.forEach(function(s){
+      var idx=Math.max(0,Math.min(bucketCount-1,Math.floor(num(s.routeProgress,0)*bucketCount)));
+      buckets[idx].push(s);
+    });
+
+    var out=[];
+    buckets.forEach(function(bucket){
+      if(!bucket.length)return;
+      bucket.sort(function(a,b){
+        var d=num(a.routeDeviation,999)-num(b.routeDeviation,999);
+        if(Math.abs(d)>0.0001)return d;
+        return powerKw(b)-powerKw(a);
+      });
+      out.push(bucket[0]);
+      if(bucket.length>=10 && num(bucket[0].routeDeviation,9)<=0.25) out.push(bucket[1]);
+    });
+
+    out.sort(function(a,b){return num(a.routeProgress,0)-num(b.routeProgress,0)});
+    var capped = out.slice(0,48);
+    return capped;
+  }
+  function captureRouteState(){
+    try{
+      var raw = window.mvLastRouteStationList || [];
+      window.mvRouteDisplayStationList0648 = routeDisplayList(raw);
+    }catch(e){}
+  }
+  function ensureModal(){
+    var modal=q('mvRouteProMapModal0648');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='mvRouteProMapModal0648';
+    modal.style.cssText='position:fixed;inset:0;z-index:320000;background:rgba(0,0,0,.76);display:none;align-items:flex-end;';
+    modal.innerHTML=
+      '<div class="mvProMapSheet0648">'+
+        '<div class="mvProMapTop0648">'+
+          '<div style="min-width:0;flex:1">'+
+            '<h2 class="mvProMapTitle0648">Rota üstündeki istasyonlar</h2>'+
+            '<p class="mvProMapSub0648" id="mvProMapSub0648">Sadece rota üstünde kalan istasyonlar gösterilir.</p>'+
+          '</div>'+
+          '<button class="mvProMapClose0648" id="mvProMapClose0648">×</button>'+
+        '</div>'+
+        '<div class="mvProMapStats0648" id="mvProMapStats0648"></div>'+
+        '<div class="mvProMapHost0648" id="mvProMapHost0648"></div>'+
+        '<div class="mvProLegend0648">'+
+          '<div class="mvProLegendItem0648"><span class="mvProLegendDot0648" style="background:#2f8cff"></span> Mavi çizgi: seçilen gidiş güzergâhı</div>'+
+          '<div class="mvProLegendItem0648"><span class="mvProLegendDot0648" style="background:#19d37a"></span> Yeşil nokta: rota üstünde kalan istasyon</div>'+
+          '<div class="mvProLegendItem0648"><span class="mvProLegendDot0648" style="background:#39aaff"></span> Mavi halka: mevcut konum</div>'+
+          '<div class="mvProLegendItem0648"><span class="mvProLegendDot0648" style="background:#35ef8d"></span> Yeşil pin: hedef</div>'+
+        '</div>'+
+        '<div class="mvRouteListNote0648" id="mvRouteListNote0648"></div>'+
+        '<div class="mvProMapActions0648">'+
+          '<button class="closeBtn" id="mvProMapClose2_0648">Kapat</button>'+
+          '<a class="goBtn" id="mvProMapNav_0648" href="#" target="_blank" rel="noopener">Google Haritalar’da aç</a>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function close(){
+      modal.style.display='none';
+      try{if(window.mvProRouteMap0648){window.mvProRouteMap0648.remove();window.mvProRouteMap0648=null}}catch(e){}
+      var host=q('mvProMapHost0648'); if(host)host.innerHTML='';
+    }
+    q('mvProMapClose0648').onclick=close;
+    q('mvProMapClose2_0648').onclick=close;
+    modal.addEventListener('click',function(e){if(e.target===modal)close()});
+    return modal;
+  }
+  function tileLayerFor(map){
+    try{
+      return L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+        subdomains:'abcd',maxZoom:20,attribution:'&copy; OSM &copy; CARTO'
+      }).addTo(map);
+    }catch(e){
+      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(map);
+    }
+  }
+  function startIcon(){
+    return L.divIcon({className:'',html:'<div class="mvStartPin0648"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+  }
+  function endIcon(){
+    return L.divIcon({className:'',html:'<div class="mvEndPin0648">✓</div>',iconSize:[22,22],iconAnchor:[11,11]});
+  }
+  function stopIcon(n){
+    return L.divIcon({className:'',html:'<div class="mvStopPin0648">'+n+'</div>',iconSize:[24,24],iconAnchor:[12,12]});
+  }
+  function getPrimaryGoogleHref(){
+    var a=document.querySelector('#routeResult .routeDirectActions a[data-original-href]');
+    if(a)return a.getAttribute('data-original-href')||a.dataset.originalHref||'#';
+    var b=document.querySelector('#routeResult .mvRouteNavBtn0648');
+    if(b)return b.getAttribute('href')||'#';
+    var c=document.querySelector('#routeResult .routeDirectActions a[href]');
+    return c?c.getAttribute('href'):'#';
+  }
+  function getStopWaypoints(){
+    return parseWaypointsFromGoogleUrl(getPrimaryGoogleHref());
+  }
+  function decorateStationList(list,waypoints){
+    list=(list||[]).map(function(s){return Object.assign({},s)});
+    var stopNo=1;
+    waypoints=(waypoints||[]).slice(0,8);
+    waypoints.forEach(function(w){
+      var best=null,bestD=999;
+      list.forEach(function(s){
+        if(s.__stopNo)return;
+        var d=km(num(s.lat,0),num(s.lon,0),w.lat,w.lon);
+        if(d<bestD){bestD=d;best=s}
+      });
+      if(best && bestD<=2.0){
+        best.__stopNo=stopNo++;
+      }
+    });
+    return list;
+  }
+  function popupHtml(s,idx){
+    var stopTag=s.__stopNo?'<div style="margin:0 0 6px"><span style="display:inline-block;border-radius:999px;padding:5px 9px;background:#2f8cff;color:#fff;font-weight:900">Durak '+s.__stopNo+'</span></div>':'';
+    return stopTag+
+      '<b>'+(idx+1)+'. '+txt(s.name||'İstasyon')+'</b><br>'+
+      txt(s.brand||'Bilinmeyen marka')+' · '+txt(s.power||((powerKw(s)||0)?(powerKw(s)+' kW'):'kW bilgisi yok'))+'<br>'+
+      'Rota üstünde yaklaşık: <b>'+Math.round(num(s.alongKm,0))+' km sonra</b><br>'+
+      'Rota sapması: <b>'+num(s.routeDeviation,0).toFixed(1)+' km</b>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">'+
+      '<a href="'+('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.lat+','+s.lon))+'" target="_blank" rel="noopener" style="text-decoration:none;text-align:center;border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.08);color:#0b1c2b;font-weight:900;color:#eaf4ff">Haritada aç</a>'+
+      '<button onclick="mvRouteMapPickIndex0644('+idx+')" style="border:0;border-radius:10px;padding:8px 10px;font-weight:900;background:#35ef8d;color:#052112">Bu istasyonu seç</button>'+
+      '</div>';
+  }
+  function buildProMap(){
+    var modal=ensureModal();
+    var host=q('mvProMapHost0648');
+    var sub=q('mvProMapSub0648');
+    var stats=q('mvProMapStats0648');
+    var note=q('mvRouteListNote0648');
+    var nav=q('mvProMapNav_0648');
+    var dest=window.mvLastRouteDest||null;
+    var points=Array.isArray(window.mvLastRoutePoints)?window.mvLastRoutePoints:[];
+    var raw=(window.mvLastRouteStationList||[]);
+    var list=(window.mvRouteDisplayStationList0648 && window.mvRouteDisplayStationList0648.length)?window.mvRouteDisplayStationList0648:routeDisplayList(raw);
+    var waypoints=getStopWaypoints();
+    list=decorateStationList(list,waypoints);
+    window.__mvRouteMapList0644=list;
+    if(sub)sub.textContent=list.length+' istasyon · sadece rota üstünde ve görünümü temiz kalan istasyonlar gösterildi';
+    if(stats){
+      var stopCount=list.filter(function(s){return !!s.__stopNo}).length;
+      var tightCount=list.filter(function(s){return num(s.routeDeviation,9)<=0.3}).length;
+      stats.innerHTML=
+        '<span class="mvProMapStat0648">🚗 Rota modu: '+((typeof mode==='function'&&mode()==='free')?'Ücretsiz geçiş':'Ücretli geçiş')+'</span>'+
+        '<span class="mvProMapStat0648">⚡ Görünen istasyon: '+list.length+'</span>'+
+        (stopCount?'<span class="mvProMapStat0648">🛑 Önerilen durak: '+stopCount+'</span>':'')+
+        '<span class="mvProMapStat0648">📍 Tam rota üstünde: '+tightCount+'</span>';
+      }
+    if(note){
+      note.textContent='Mavi numaralı pinler önerilen şarj duraklarını gösterir. Yeşil noktalar rota üstünde kalan diğer uygun istasyonlardır.';
+    }
+    if(nav){
+      nav.href=getPrimaryGoogleHref();
+      nav.textContent='Google Haritalar’da aç';
+    }
+    if(!host)return;
+    modal.style.display='flex';
+    host.innerHTML='<div style="padding:18px;color:#91a8bf">Profesyonel rota haritası yükleniyor…</div>';
+
+    if(!(window.L && L.map)){
+      if(typeof loadLeaflet==='function'){
+        loadLeaflet().then(draw).catch(fallback);
+      }else{
+        fallback();
+      }
+    }else draw();
+
+    function fallback(){
+      host.innerHTML='<div class="empty" style="margin:14px">Harita açılamadı. Yine de rota üstündeki istasyonlar filtrelendi. “Google Haritalar’da aç” ile devam edebilirsin.</div>';
+    }
+    function draw(){
+      try{if(window.mvProRouteMap0648){window.mvProRouteMap0648.remove();window.mvProRouteMap0648=null}}catch(e){}
+      var mapId='mvProRouteMapInner0648_'+Date.now();
+      host.innerHTML='<div id="'+mapId+'" style="height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>';
+      var el=q(mapId); if(!el){fallback();return;}
+      var map=L.map(el,{zoomControl:false,tap:false,preferCanvas:true,scrollWheelZoom:true,dragging:true,touchZoom:true,doubleClickZoom:true});
+      window.mvProRouteMap0648=map;
+      tileLayerFor(map);
+      L.control.zoom({position:'topleft'}).addTo(map);
+
+      var bounds=[];
+      if(points.length>1){
+        var step=Math.max(1,Math.ceil(points.length/500));
+        var latlngs=[];
+        for(var i=0;i<points.length;i+=step){
+          var p=points[i], la=num(p.lat,NaN), lo=num(p.lon,NaN);
+          if(Number.isFinite(la)&&Number.isFinite(lo)){latlngs.push([la,lo]); bounds.push([la,lo]);}
+        }
+        if(latlngs.length){
+          L.polyline(latlngs,{color:'#ffffff',weight:10,opacity:.50,lineCap:'round',lineJoin:'round'}).addTo(map);
+          L.polyline(latlngs,{color:'#2f8cff',weight:6,opacity:.96,lineCap:'round',lineJoin:'round'}).addTo(map);
+        }
+      }
+      if(window.userPos && Number.isFinite(Number(userPos.lat)) && Number.isFinite(Number(userPos.lon))){
+        var here=[Number(userPos.lat),Number(userPos.lon)];
+        bounds.push(here);
+        L.marker(here,{icon:startIcon()}).addTo(map).bindPopup('<b>Mevcut konum</b>');
+      }
+      if(dest && Number.isFinite(Number(dest.lat)) && Number.isFinite(Number(dest.lon))){
+        var end=[Number(dest.lat),Number(dest.lon)];
+        bounds.push(end);
+        L.marker(end,{icon:endIcon()}).addTo(map).bindPopup('<b>Hedef</b><br>'+txt(dest.name||''));
+      }
+
+      list.forEach(function(s,idx){
+        var ll=[Number(s.lat),Number(s.lon)];
+        if(!Number.isFinite(ll[0])||!Number.isFinite(ll[1]))return;
+        var marker;
+        if(s.__stopNo){
+          marker=L.marker(ll,{icon:stopIcon(s.__stopNo)}).addTo(map);
+        }else{
+          marker=L.circleMarker(ll,{
+            radius:5,color:'#ffffff',weight:2,fillColor:'#19d37a',fillOpacity:.92
+          }).addTo(map);
+        }
+        marker.bindPopup(popupHtml(s,idx));
+      });
+
+      if(bounds.length){
+        map.fitBounds(bounds,{padding:[24,24],maxZoom:11});
+      }else{
+        map.setView([40.84,31.15],8);
+      }
+      [70,220,550,1100].forEach(function(ms){setTimeout(function(){try{map.invalidateSize(true)}catch(e){}},ms)});
+    }
+  }
+
+  function patchRouteResultActions(){
+    captureRouteState();
+    var result=q('routeResult');
+    if(!result)return;
+
+    var mapAllBtn=result.querySelector('.routeMapAllBtn');
+    if(mapAllBtn){
+      mapAllBtn.textContent='Rota üstündeki istasyonları haritada gör';
+      mapAllBtn.setAttribute('onclick','mvShowRouteStationsMap(true)');
+    }
+    var mapAllBox=result.querySelector('.routeMapAllBox p');
+    if(mapAllBox){
+      mapAllBox.textContent='Sadece rota çizgisi üstünde kalan istasyonları profesyonel haritada gör ve istediğini seç.';
+    }
+
+    var actions=result.querySelector('.routeDirectActions');
+    if(!actions)return;
+    var firstA=actions.querySelector('a[href]');
+    if(firstA && !firstA.dataset.mvProPatched){
+      var original=firstA.getAttribute('href')||'#';
+      firstA.dataset.mvProPatched='1';
+      firstA.dataset.originalHref=original;
+      firstA.setAttribute('data-original-href', original);
+      firstA.href='#';
+      firstA.textContent='Profesyonel duraklı haritayı aç';
+      firstA.className='mvRouteActionBtn0648';
+      firstA.onclick=function(ev){ev.preventDefault(); buildProMap(); return false;};
+
+      if(!actions.querySelector('.mvRouteNavBtn0648')){
+        var nav=document.createElement('a');
+        nav.className='mvRouteNavBtn0648';
+        nav.href=original;
+        nav.target='_blank';
+        nav.rel='noopener';
+        nav.textContent='Google Haritalar’da navigasyonu aç';
+        actions.insertBefore(nav, actions.lastElementChild);
+      }
+    }
+  }
+
+  window.mvShowRouteStationsMap=function(){
+    captureRouteState();
+    buildProMap();
+  };
+
+  var oldPlan=window.planEvRoute;
+  if(typeof oldPlan==='function' && !oldPlan.__mvProMap0648){
+    window.planEvRoute=function(){
+      var r=oldPlan.apply(this,arguments);
+      return Promise.resolve(r).then(function(v){
+        setTimeout(patchRouteResultActions,30);
+        setTimeout(patchRouteResultActions,260);
+        setTimeout(patchRouteResultActions,900);
+        return v;
+      },function(e){
+        setTimeout(patchRouteResultActions,150);
+        throw e;
+      });
+    };
+    window.planEvRoute.__mvProMap0648=true;
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(patchRouteResultActions,400);
+  });
+  window.addEventListener('load',function(){
+    setTimeout(patchRouteResultActions,650);
+  });
+  setInterval(function(){
+    try{patchRouteResultActions()}catch(e){}
+  },2200);
+})();
+</script>
+
+
+<style>
+/* UFUK_ROUTE_BRAND_PINS_CARDS_0649 */
+.mvProMapSheet0649{
+  width:100%;max-width:430px;margin:0 auto;background:#07111d;border:1px solid rgba(255,255,255,.12);
+  border-bottom:0;border-radius:28px 28px 0 0;padding:16px;max-height:94vh;overflow:auto;
+  box-shadow:0 -18px 50px rgba(0,0,0,.45)
+}
+.mvProMapTop0649{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mvProMapClose0649{
+  width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);color:#fff;font-size:24px;font-weight:900;flex:0 0 44px
+}
+.mvProMapTitle0649{margin:8px 0 6px;font-size:27px;line-height:1.15;color:#edf5ff}
+.mvProMapSub0649{margin:0 0 10px;color:#91a8bf;line-height:1.35}
+.mvProMapStats0649{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mvProMapStat0649{
+  display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 11px;
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#dcecff;font-size:12px;font-weight:800
+}
+.mvProMapHost0649{
+  height:58vh;min-height:380px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c;position:relative
+}
+.mvProLegend0649{
+  margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px
+}
+.mvProLegendItem0649{
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);border-radius:16px;padding:10px 11px;
+  color:#dcecff;font-size:12px;line-height:1.35
+}
+.mvProLegendDot0649{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;vertical-align:middle}
+.mvProCardsWrap0649{margin-top:12px}
+.mvProCardsTitle0649{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.mvProCardsTitle0649 b{font-size:15px;color:#edf5ff}
+.mvProCardsTitle0649 span{font-size:11px;color:#91a8bf}
+.mvProCards0649{
+  display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;
+  padding:2px 2px 8px
+}
+.mvProCards0649::-webkit-scrollbar{display:none}
+.mvProCard0649{
+  position:relative;flex:0 0 84%;min-width:84%;max-width:84%;scroll-snap-align:start;border-radius:20px;
+  border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+  padding:12px;box-shadow:0 14px 30px rgba(0,0,0,.18)
+}
+.mvProCard0649.selected{border-color:rgba(57,170,255,.45);background:linear-gradient(180deg,rgba(57,170,255,.16),rgba(255,255,255,.035))}
+.mvProCardTop0649{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.mvProBrandPill0649{
+  display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900;
+  border:1px solid rgba(255,255,255,.10);color:#fff
+}
+.mvBrandDot0649{display:inline-block;width:9px;height:9px;border-radius:999px}
+.mvStopBadge0649,.mvSelBadge0649{
+  display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;
+}
+.mvStopBadge0649{background:rgba(25,211,122,.16);border:1px solid rgba(25,211,122,.34);color:#9bffc4}
+.mvSelBadge0649{background:rgba(57,170,255,.16);border:1px solid rgba(57,170,255,.34);color:#9bd4ff}
+.mvProCard0649 h4{margin:8px 0 6px;font-size:17px;line-height:1.25;color:#fff}
+.mvProCard0649 p{margin:0;color:#cfe0f1;font-size:12.5px;line-height:1.35}
+.mvProMetrics0649{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mvProMetric0649{
+  border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);border-radius:14px;padding:8px 9px
+}
+.mvProMetric0649 span{display:block;color:#91a8bf;font-size:10.5px}
+.mvProMetric0649 b{display:block;margin-top:3px;font-size:13px;color:#fff}
+.mvProCardActions0649{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mvProCardActions0649 button,.mvProCardActions0649 a{
+  display:block;text-align:center;text-decoration:none;border-radius:14px;padding:11px 10px;font-weight:900;font-size:13px
+}
+.mvProCardActions0649 .focusBtn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#edf5ff}
+.mvProCardActions0649 .pickBtn{border:0;background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112}
+.mvProMapActions0649{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mvProMapActions0649 a,.mvProMapActions0649 button{
+  display:block;text-align:center;text-decoration:none;border-radius:999px;padding:13px;font-weight:900
+}
+.mvProMapActions0649 .closeBtn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#edf5ff}
+.mvProMapActions0649 .goBtn{background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112}
+.mvRouteActionBtn0649{
+  display:block;text-align:center;border-radius:17px;padding:13px 14px;text-decoration:none;font-weight:900;
+  background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112!important
+}
+.mvRouteNavBtn0649{
+  display:block;text-align:center;border-radius:17px;padding:13px 14px;text-decoration:none;font-weight:900;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#edf5ff!important
+}
+.mvStartPin0649,.mvEndPin0649,.mvStopPin0649{
+  display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.22)
+}
+.mvStartPin0649{width:18px;height:18px;background:#0b1c2b;border:3px solid #39aaff}
+.mvEndPin0649{width:22px;height:22px;background:#35ef8d;color:#052112;border:2px solid #fff;font-size:12px}
+.mvStopPin0649{
+  min-width:26px;height:26px;padding:0 7px;color:#fff;border:2px solid #fff;font-size:12px
+}
+.mvCardHint0649{margin-top:8px;color:#91a8bf;font-size:11px;line-height:1.35}
+.leaflet-popup-content-wrapper{border-radius:16px!important}
+.leaflet-popup-content{margin:12px 14px!important;line-height:1.35!important}
+@media(max-width:390px){
+  .mvProLegend0649,.mvProMapActions0649,.mvProCardActions0649{grid-template-columns:1fr}
+  .mvProMetrics0649{grid-template-columns:1fr 1fr}
+}
+</style>
+<script>
+/* UFUK_ROUTE_BRAND_PINS_CARDS_0649 */
+(function(){
+  function q(id){return document.getElementById(id)}
+  function num(v,d){var x=Number(String(v==null?'':v).replace(',','.'));return Number.isFinite(x)?x:d}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+  function txt(v){return esc(v||'')}
+  function km(a,b,c,d){
+    var R=6371,toRad=function(x){return x*Math.PI/180};
+    var dLat=toRad(c-a),dLon=toRad(d-b);
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function powerKw(s){
+    var direct=num(s&&(s.routeKw||s.kw||s.kW),NaN);
+    if(Number.isFinite(direct))return direct;
+    var t=String((s&&s.power)||'');
+    var m=t.match(/(\d+([.,]\d+)?)/g)||[];
+    var vals=m.map(function(v){return num(v,NaN)}).filter(function(v){return Number.isFinite(v)});
+    return vals.length?Math.max.apply(null,vals):0;
+  }
+  function parseLatLon(str){
+    str=decodeURIComponent(String(str||'')).trim();
+    var a=str.split(',');
+    if(a.length<2)return null;
+    var lat=num(a[0],NaN), lon=num(a[1],NaN);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    return {lat:lat,lon:lon};
+  }
+  function parseWaypointsFromGoogleUrl(url){
+    try{
+      var u=new URL(url,location.href);
+      var raw=u.searchParams.get('waypoints')||'';
+      return raw?raw.split('|').map(parseLatLon).filter(Boolean):[];
+    }catch(e){return []}
+  }
+  function routeDisplayList(raw){
+    raw=(raw||[]).filter(function(s){
+      return s && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon)) &&
+             num(s.routeProgress,0)>0.01 && num(s.routeProgress,0)<0.99;
+    }).sort(function(a,b){
+      var p=num(a.routeProgress,0)-num(b.routeProgress,0);
+      if(Math.abs(p)>0.0001)return p;
+      var d=num(a.routeDeviation,999)-num(b.routeDeviation,999);
+      if(Math.abs(d)>0.0001)return d;
+      return powerKw(b)-powerKw(a);
+    });
+
+    var maxDev = raw.length>600 ? 0.55 : raw.length>300 ? 0.8 : raw.length>160 ? 1.1 : raw.length>80 ? 1.5 : 2.2;
+    raw = raw.filter(function(s){return num(s.routeDeviation,999)<=maxDev});
+
+    var seen={};
+    raw = raw.filter(function(s){
+      var key = (s.name||'')+'|'+Number(s.lat).toFixed(4)+'|'+Number(s.lon).toFixed(4);
+      if(seen[key])return false;
+      seen[key]=1;
+      return true;
+    });
+
+    var bucketCount = raw.length>220 ? 36 : raw.length>120 ? 28 : raw.length>60 ? 22 : 16;
+    var buckets = Array.from({length:bucketCount}, function(){return []});
+    raw.forEach(function(s){
+      var idx=Math.max(0,Math.min(bucketCount-1,Math.floor(num(s.routeProgress,0)*bucketCount)));
+      buckets[idx].push(s);
+    });
+
+    var out=[];
+    buckets.forEach(function(bucket){
+      if(!bucket.length)return;
+      bucket.sort(function(a,b){
+        var d=num(a.routeDeviation,999)-num(b.routeDeviation,999);
+        if(Math.abs(d)>0.0001)return d;
+        return powerKw(b)-powerKw(a);
+      });
+      out.push(bucket[0]);
+      if(bucket.length>=12 && num(bucket[0].routeDeviation,9)<=0.25) out.push(bucket[1]);
+    });
+
+    out.sort(function(a,b){return num(a.routeProgress,0)-num(b.routeProgress,0)});
+    return out.slice(0,42);
+  }
+  function brandStyle(name){
+    var n=String(name||'').toLowerCase().trim();
+    var map=[
+      {k:['zes'], bg:'#4c6fff'},
+      {k:['trugo'], bg:'#f59d0e'},
+      {k:['eşarj','esarj','eşarj'], bg:'#d84f68'},
+      {k:['voltrun'], bg:'#0fb59c'},
+      {k:['sharz','şarj','sarz'], bg:'#8c57ff'},
+      {k:['beefull'], bg:'#f2c94c'},
+      {k:['otopratik'], bg:'#4bb543'},
+      {k:['wat mobil','wat'], bg:'#2db3ff'},
+      {k:['greenway'], bg:'#19a974'}
+    ];
+    for(var i=0;i<map.length;i++){
+      if(map[i].k.some(function(t){return n.indexOf(t)>-1})) return {bg:map[i].bg};
+    }
+    return {bg:'#19a974'};
+  }
+  function startIcon(){
+    return L.divIcon({className:'',html:'<div class="mvStartPin0649"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+  }
+  function endIcon(){
+    return L.divIcon({className:'',html:'<div class="mvEndPin0649">✓</div>',iconSize:[22,22],iconAnchor:[11,11]});
+  }
+  function stopIcon(label, color){
+    return L.divIcon({className:'',html:'<div class="mvStopPin0649" style="background:'+color+'">'+label+'</div>',iconSize:[26,26],iconAnchor:[13,13]});
+  }
+  function normalIcon(color){
+    return L.divIcon({className:'',html:'<div class="mvStopPin0649" style="background:'+color+';min-width:22px;height:22px;font-size:0;padding:0"></div>',iconSize:[22,22],iconAnchor:[11,11]});
+  }
+  function getPrimaryGoogleHref(){
+    var a=document.querySelector('#routeResult .routeDirectActions a[data-original-href]');
+    if(a)return a.getAttribute('data-original-href')||a.dataset.originalHref||'#';
+    var b=document.querySelector('#routeResult .routeDirectActions a[href]');
+    return b?b.getAttribute('href'):'#';
+  }
+  function decorateStationList(list,waypoints){
+    list=(list||[]).map(function(s){return Object.assign({},s)});
+    var stopNo=1;
+    waypoints=(waypoints||[]).slice(0,8);
+    waypoints.forEach(function(w){
+      var best=null,bestD=999;
+      list.forEach(function(s){
+        if(s.__stopNo)return;
+        var d=km(num(s.lat,0),num(s.lon,0),w.lat,w.lon);
+        if(d<bestD){bestD=d;best=s}
+      });
+      if(best && bestD<=2.0){
+        best.__stopNo=stopNo;
+        best.__selectedStop=(stopNo===1);
+        stopNo++;
+      }
+    });
+    return list;
+  }
+  function tileLayerFor(map){
+    try{
+      return L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+        subdomains:'abcd',maxZoom:20,attribution:'&copy; OSM &copy; CARTO'
+      }).addTo(map);
+    }catch(e){
+      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(map);
+    }
+  }
+  function ensureModal(){
+    var modal=q('mvRouteProMapModal0649');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='mvRouteProMapModal0649';
+    modal.style.cssText='position:fixed;inset:0;z-index:325000;background:rgba(0,0,0,.76);display:none;align-items:flex-end;';
+    modal.innerHTML=
+      '<div class="mvProMapSheet0649">'+
+        '<div class="mvProMapTop0649">'+
+          '<div style="min-width:0;flex:1">'+
+            '<h2 class="mvProMapTitle0649">Rota üstündeki istasyonlar</h2>'+
+            '<p class="mvProMapSub0649" id="mvProMapSub0649">Sadece rota çizgisi üstünde kalan istasyonlar gösterilir.</p>'+
+          '</div>'+
+          '<button class="mvProMapClose0649" id="mvProMapClose0649">×</button>'+
+        '</div>'+
+        '<div class="mvProMapStats0649" id="mvProMapStats0649"></div>'+
+        '<div class="mvProMapHost0649" id="mvProMapHost0649"></div>'+
+        '<div class="mvProLegend0649">'+
+          '<div class="mvProLegendItem0649"><span class="mvProLegendDot0649" style="background:#2f8cff"></span> Mavi pin: seçili / önerilen şarj durağı</div>'+
+          '<div class="mvProLegendItem0649"><span class="mvProLegendDot0649" style="background:#19d37a"></span> Diğer rota üstü istasyonlar</div>'+
+          '<div class="mvProLegendItem0649"><span class="mvProLegendDot0649" style="background:#39aaff"></span> Mavi halka: mevcut konum</div>'+
+          '<div class="mvProLegendItem0649"><span class="mvProLegendDot0649" style="background:#35ef8d"></span> Yeşil pin: hedef</div>'+
+        '</div>'+
+        '<div class="mvProCardsWrap0649">'+
+          '<div class="mvProCardsTitle0649"><b>Yakındaki rota üstü istasyon kartları</b><span>Sağa kaydır</span></div>'+
+          '<div class="mvProCards0649" id="mvProCards0649"></div>'+
+          '<div class="mvCardHint0649">Karta dokununca harita o istasyona odaklanır. “Bu istasyonu seç” ile rotayı o durağa göre yenileyebilirsin.</div>'+
+        '</div>'+
+        '<div class="mvProMapActions0649">'+
+          '<button class="closeBtn" id="mvProMapClose2_0649">Kapat</button>'+
+          '<a class="goBtn" id="mvProMapNav_0649" href="#" target="_blank" rel="noopener">Google Haritalar’da aç</a>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function close(){
+      modal.style.display='none';
+      try{if(window.mvProRouteMap0649){window.mvProRouteMap0649.remove();window.mvProRouteMap0649=null}}catch(e){}
+      var host=q('mvProMapHost0649'); if(host)host.innerHTML='';
+    }
+    q('mvProMapClose0649').onclick=close;
+    q('mvProMapClose2_0649').onclick=close;
+    modal.addEventListener('click',function(e){if(e.target===modal)close()});
+    return modal;
+  }
+
+  function popupHtml(s,idx){
+    var badge=s.__selectedStop?'<div style="margin:0 0 6px"><span style="display:inline-block;border-radius:999px;padding:5px 9px;background:rgba(57,170,255,.16);border:1px solid rgba(57,170,255,.34);color:#2f8cff;font-weight:900">Seçili durak</span></div>':
+      (s.__stopNo?'<div style="margin:0 0 6px"><span style="display:inline-block;border-radius:999px;padding:5px 9px;background:rgba(25,211,122,.16);border:1px solid rgba(25,211,122,.34);color:#19d37a;font-weight:900">Durak '+s.__stopNo+'</span></div>':'');
+    return badge+
+      '<b>'+(idx+1)+'. '+txt(s.name||'İstasyon')+'</b><br>'+
+      txt(s.brand||'Bilinmeyen marka')+' · '+txt(s.power||((powerKw(s)||0)?(powerKw(s)+' kW'):'kW bilgisi yok'))+'<br>'+
+      'Rota üstünde yaklaşık: <b>'+Math.round(num(s.alongKm,0))+' km sonra</b><br>'+
+      'Rota sapması: <b>'+num(s.routeDeviation,0).toFixed(1)+' km</b>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">'+
+      '<a href="'+('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.lat+','+s.lon))+'" target="_blank" rel="noopener" style="text-decoration:none;text-align:center;border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.08);color:#eaf4ff;font-weight:900">Haritada aç</a>'+
+      '<button onclick="mvRouteMapPickIndex0644('+idx+')" style="border:0;border-radius:10px;padding:8px 10px;font-weight:900;background:#35ef8d;color:#052112">Bu istasyonu seç</button>'+
+      '</div>';
+  }
+
+  function renderCards(list){
+    var box=q('mvProCards0649');
+    if(!box)return;
+    box.innerHTML='';
+    (list||[]).forEach(function(s,idx){
+      var style=brandStyle(s.brand||s.name||'');
+      var card=document.createElement('div');
+      card.className='mvProCard0649'+(s.__selectedStop?' selected':'');
+      card.style.boxShadow='inset 0 0 0 1px '+style.bg+'33, 0 14px 30px rgba(0,0,0,.18)';
+      var badge = s.__selectedStop
+        ? '<span class="mvSelBadge0649">Seçili durak</span>'
+        : (s.__stopNo ? '<span class="mvStopBadge0649">Durak '+s.__stopNo+'</span>' : '');
+      card.innerHTML=
+        '<div class="mvProCardTop0649">'+
+          '<div style="min-width:0;flex:1">'+
+            '<span class="mvProBrandPill0649" style="background:'+style.bg+'1e;border-color:'+style.bg+'55"><span class="mvBrandDot0649" style="background:'+style.bg+'"></span>'+(txt(s.brand||'Marka yok'))+'</span>'+
+            '<h4>'+txt(s.name||'İstasyon')+'</h4>'+
+          '</div>'+
+          '<div>'+badge+'</div>'+
+        '</div>'+
+        '<p>'+txt(s.address||'Adres bilgisi yok')+'</p>'+
+        '<div class="mvProMetrics0649">'+
+          '<div class="mvProMetric0649"><span>Güç</span><b>'+txt(s.power||((powerKw(s)||0)?(powerKw(s)+' kW'):'Bilinmiyor'))+'</b></div>'+
+          '<div class="mvProMetric0649"><span>Rota üstü</span><b>'+Math.round(num(s.alongKm,0))+' km</b></div>'+
+          '<div class="mvProMetric0649"><span>Sapma</span><b>'+num(s.routeDeviation,0).toFixed(1)+' km</b></div>'+
+        '</div>'+
+        '<div class="mvProCardActions0649">'+
+          '<button class="focusBtn">Haritada odaklan</button>'+
+          '<button class="pickBtn">Bu istasyonu seç</button>'+
+        '</div>';
+      card.querySelector('.focusBtn').onclick=function(ev){
+        ev.stopPropagation();
+        if(window.mvProRouteMap0649 && window.mvRouteMapMarkers0649 && window.mvRouteMapMarkers0649[idx]){
+          var m=window.mvRouteMapMarkers0649[idx];
+          try{window.mvProRouteMap0649.setView(m.getLatLng(),13,{animate:true})}catch(e){}
+          try{m.openPopup()}catch(e){}
+        }
+      };
+      card.querySelector('.pickBtn').onclick=function(ev){
+        ev.stopPropagation();
+        if(typeof window.mvRouteMapPickIndex0644==='function') window.mvRouteMapPickIndex0644(idx);
+      };
+      card.onclick=function(){
+        if(window.mvProRouteMap0649 && window.mvRouteMapMarkers0649 && window.mvRouteMapMarkers0649[idx]){
+          var m=window.mvRouteMapMarkers0649[idx];
+          try{window.mvProRouteMap0649.setView(m.getLatLng(),13,{animate:true})}catch(e){}
+          try{m.openPopup()}catch(e){}
+        }
+      };
+      box.appendChild(card);
+    });
+  }
+
+  function buildProMap0649(){
+    var modal=ensureModal();
+    var host=q('mvProMapHost0649');
+    var sub=q('mvProMapSub0649');
+    var stats=q('mvProMapStats0649');
+    var nav=q('mvProMapNav_0649');
+    var dest=window.mvLastRouteDest||null;
+    var points=Array.isArray(window.mvLastRoutePoints)?window.mvLastRoutePoints:[];
+    var raw=(window.mvLastRouteStationList||[]);
+    var waypoints=parseWaypointsFromGoogleUrl(getPrimaryGoogleHref());
+    var list=decorateStationList(routeDisplayList(raw), waypoints);
+    window.__mvRouteMapList0644=list;
+    if(sub)sub.textContent=list.length+' istasyon · sadece rota çizgisi üzerinde kalan temiz liste gösterildi';
+    if(stats){
+      var stopCount=list.filter(function(s){return !!s.__stopNo}).length;
+      var selectedCount=list.filter(function(s){return !!s.__selectedStop}).length;
+      stats.innerHTML=
+        '<span class="mvProMapStat0649">🚗 Mod: '+((typeof mode==='function'&&mode()==='free')?'Ücretsiz geçiş':'Ücretli geçiş')+'</span>'+
+        '<span class="mvProMapStat0649">⚡ Görünen istasyon: '+list.length+'</span>'+
+        '<span class="mvProMapStat0649">🛑 Durak: '+stopCount+'</span>'+
+        '<span class="mvProMapStat0649">🔵 Seçili durak: '+selectedCount+'</span>';
+    }
+    if(nav){
+      nav.href=getPrimaryGoogleHref();
+      nav.textContent='Google Haritalar’da aç';
+    }
+    renderCards(list);
+    if(!host)return;
+    modal.style.display='flex';
+    host.innerHTML='<div style="padding:18px;color:#91a8bf">Profesyonel rota haritası yükleniyor…</div>';
+
+    function fallback(){
+      host.innerHTML='<div class="empty" style="margin:14px">Harita açılamadı. Yine de filtrelenmiş istasyon kartlarını kullanabilirsin veya Google Haritalar ile devam edebilirsin.</div>';
+    }
+    function draw(){
+      try{if(window.mvProRouteMap0649){window.mvProRouteMap0649.remove();window.mvProRouteMap0649=null}}catch(e){}
+      var mapId='mvProRouteMapInner0649_'+Date.now();
+      host.innerHTML='<div id="'+mapId+'" style="height:58vh;min-height:380px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>';
+      var el=q(mapId); if(!el){fallback();return;}
+      var map=L.map(el,{zoomControl:false,tap:false,preferCanvas:true,scrollWheelZoom:true,dragging:true,touchZoom:true,doubleClickZoom:true});
+      window.mvProRouteMap0649=map;
+      tileLayerFor(map);
+      L.control.zoom({position:'topleft'}).addTo(map);
+
+      var bounds=[];
+      if(points.length>1){
+        var step=Math.max(1,Math.ceil(points.length/500));
+        var latlngs=[];
+        for(var i=0;i<points.length;i+=step){
+          var p=points[i], la=num(p.lat,NaN), lo=num(p.lon,NaN);
+          if(Number.isFinite(la)&&Number.isFinite(lo)){latlngs.push([la,lo]); bounds.push([la,lo]);}
+        }
+        if(latlngs.length){
+          L.polyline(latlngs,{color:'#ffffff',weight:10,opacity:.50,lineCap:'round',lineJoin:'round'}).addTo(map);
+          L.polyline(latlngs,{color:'#2f8cff',weight:6,opacity:.96,lineCap:'round',lineJoin:'round'}).addTo(map);
+        }
+      }
+      if(window.userPos && Number.isFinite(Number(userPos.lat)) && Number.isFinite(Number(userPos.lon))){
+        var here=[Number(userPos.lat),Number(userPos.lon)];
+        bounds.push(here);
+        L.marker(here,{icon:startIcon()}).addTo(map).bindPopup('<b>Mevcut konum</b>');
+      }
+      if(dest && Number.isFinite(Number(dest.lat)) && Number.isFinite(Number(dest.lon))){
+        var end=[Number(dest.lat),Number(dest.lon)];
+        bounds.push(end);
+        L.marker(end,{icon:endIcon()}).addTo(map).bindPopup('<b>Hedef</b><br>'+txt(dest.name||''));
+      }
+
+      window.mvRouteMapMarkers0649=[];
+      list.forEach(function(s,idx){
+        var ll=[Number(s.lat),Number(s.lon)];
+        if(!Number.isFinite(ll[0])||!Number.isFinite(ll[1]))return;
+        bounds.push(ll);
+        var marker;
+        if(s.__selectedStop){
+          marker=L.marker(ll,{icon:stopIcon('S','#2f8cff')}).addTo(map);
+        }else if(s.__stopNo){
+          marker=L.marker(ll,{icon:stopIcon(String(s.__stopNo),'#19d37a')}).addTo(map);
+        }else{
+          // Haritada diğerleri yeşil; marka rengi popup/kartta korunur.
+          marker=L.marker(ll,{icon:normalIcon('#19d37a')}).addTo(map);
+        }
+        marker.bindPopup(popupHtml(s,idx));
+        window.mvRouteMapMarkers0649[idx]=marker;
+      });
+
+      if(bounds.length){
+        map.fitBounds(bounds,{padding:[24,24],maxZoom:11});
+      }else{
+        map.setView([40.84,31.15],8);
+      }
+      [70,220,550,1100].forEach(function(ms){setTimeout(function(){try{map.invalidateSize(true)}catch(e){}},ms)});
+    }
+
+    if(!(window.L && L.map)){
+      if(typeof loadLeaflet==='function'){
+        loadLeaflet().then(draw).catch(fallback);
+      }else{
+        fallback();
+      }
+    }else{
+      draw();
+    }
+  }
+
+  function patchRouteResultActions0649(){
+    var result=q('routeResult');
+    if(!result)return;
+
+    var mapAllBtn=result.querySelector('.routeMapAllBtn');
+    if(mapAllBtn){
+      mapAllBtn.textContent='Rota üstündeki istasyonları haritada gör';
+      mapAllBtn.setAttribute('onclick','mvShowRouteStationsMap0649()');
+    }
+    var mapAllBox=result.querySelector('.routeMapAllBox p');
+    if(mapAllBox){
+      mapAllBox.textContent='Sadece rota üstündeki istasyonları profesyonel haritada gör. Marka bilgisi, seçili durak vurgusu ve yatay kayan kartlar da gösterilir.';
+    }
+
+    var actions=result.querySelector('.routeDirectActions');
+    if(!actions)return;
+    var firstA=actions.querySelector('a[href]');
+    if(firstA){
+      var original=firstA.getAttribute('data-original-href') || firstA.dataset.originalHref || firstA.getAttribute('href') || '#';
+      firstA.dataset.mvProPatched0649='1';
+      firstA.dataset.originalHref=original;
+      firstA.setAttribute('data-original-href', original);
+      firstA.href='#';
+      firstA.textContent='Profesyonel duraklı haritayı aç';
+      firstA.className='mvRouteActionBtn0649';
+      firstA.onclick=function(ev){ev.preventDefault(); buildProMap0649(); return false;};
+
+      var extra=actions.querySelector('.mvRouteNavBtn0649');
+      if(!extra){
+        var nav=document.createElement('a');
+        nav.className='mvRouteNavBtn0649';
+        nav.href=original;
+        nav.target='_blank';
+        nav.rel='noopener';
+        nav.textContent='Google Haritalar’da navigasyonu aç';
+        actions.insertBefore(nav, actions.lastElementChild);
+      }else{
+        extra.href=original;
+      }
+    }
+  }
+
+  window.mvShowRouteStationsMap0649=function(){ buildProMap0649(); };
+  window.mvShowRouteStationsMap=function(){ buildProMap0649(); };
+
+  var oldPlan=window.planEvRoute;
+  if(typeof oldPlan==='function' && !oldPlan.__mvBrandPins0649){
+    window.planEvRoute=function(){
+      var r=oldPlan.apply(this,arguments);
+      return Promise.resolve(r).then(function(v){
+        setTimeout(patchRouteResultActions0649,40);
+        setTimeout(patchRouteResultActions0649,260);
+        setTimeout(patchRouteResultActions0649,900);
+        return v;
+      },function(e){
+        setTimeout(patchRouteResultActions0649,150);
+        throw e;
+      });
+    };
+    window.planEvRoute.__mvBrandPins0649=true;
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(patchRouteResultActions0649,450)});
+  window.addEventListener('load',function(){setTimeout(patchRouteResultActions0649,700)});
+  setInterval(function(){try{patchRouteResultActions0649()}catch(e){}},2200);
 })();
 </script>
 
