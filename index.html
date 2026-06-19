@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<!-- UFUK_BRAND_OFFER_SINGLE_SEARCH_0645 + UFUK_ROUTE_TOLL_ALWAYS_VISIBLE_0646 -->
+<!-- UFUK_BRAND_OFFER_SINGLE_SEARCH_0645 + UFUK_ROUTE_TOLL_ALWAYS_VISIBLE_0646 + UFUK_FREE_TOLL_REAL_ROUTE_SHAPE_0647 -->
 <!-- UFUK_ROUTE_MAP_FRESH_CONTAINER_LEAFLET_FIX_0643 -->
 <!-- UFUK_SPONSOR_PACKAGE_PRICE_AND_OFFER_COUNT_FIX_0625 -->
 <!-- UFUK_SPONSOR_CARI_PACKAGES_0624 -->
@@ -5977,6 +5977,347 @@ setTimeout(function(){try{document.documentElement.classList.add('mv-boot-ready'
     var route=document.getElementById('tab-route');
     if(route && String(route.className||'').indexOf('active')>-1)ensureVisibleTollBox0646();
   },1500);
+})();
+</script>
+
+
+<style>
+/* UFUK_FREE_TOLL_REAL_ROUTE_SHAPE_0647 */
+.routeTollResultNote.freeStrong{
+  border:1px solid rgba(53,239,141,.28)!important;
+  background:rgba(53,239,141,.075)!important;
+  color:#dfffea!important;
+  border-radius:16px!important;
+  padding:10px!important;
+  margin:10px 0!important;
+  font-size:12.5px!important;
+  line-height:1.35!important;
+}
+</style>
+<script>
+/* UFUK_FREE_TOLL_REAL_ROUTE_SHAPE_0647
+   Ücretsiz geçiş seçilince sadece Google linkine avoid=tolls eklemekle kalmaz.
+   OSRM rota çizgisini de ücretsiz ana yol koridoruna zorlamak için D100 / E5 / D750 geçiş noktaları ekler.
+*/
+(function(){
+  var KEY='mv_route_toll_mode_0644';
+  var originalFetch = window.fetch ? window.fetch.bind(window) : null;
+
+  function q(id){return document.getElementById(id)}
+  function isFree(){try{return localStorage.getItem(KEY)==='free'}catch(e){return false}}
+  function num(v,d){var x=Number(String(v==null?'':v).replace(',','.'));return Number.isFinite(x)?x:d}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+  function toast(m){try{if(typeof routeToast==='function')routeToast(m)}catch(e){}}
+
+  function km(a,b,c,d){
+    var R=6371, toRad=function(x){return x*Math.PI/180};
+    var dLat=toRad(c-a), dLon=toRad(d-b);
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+
+  function inTurkey(p){
+    return p && p.lat>35 && p.lat<43 && p.lon>25 && p.lon<45;
+  }
+
+  function parseLonLat(s){
+    var a=String(s||'').split(',');
+    if(a.length<2)return null;
+    var lon=num(a[0],NaN), lat=num(a[1],NaN);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    return {lat:lat,lon:lon};
+  }
+
+  function parseLatLon(s){
+    s=decodeURIComponent(String(s||'')).trim();
+    var a=s.split(',');
+    if(a.length<2)return null;
+    var lat=num(a[0],NaN), lon=num(a[1],NaN);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    return {lat:lat,lon:lon};
+  }
+
+  function fmtLatLon(p){return Number(p.lat).toFixed(6)+','+Number(p.lon).toFixed(6)}
+  function fmtLonLat(p){return Number(p.lon).toFixed(6)+','+Number(p.lat).toFixed(6)}
+
+  // Ücretsiz ana yol koridoru: İstanbul E5/D100 → Kocaeli → Sakarya → Düzce → Bolu → Gerede → Ankara D750.
+  // Bu noktalar ücretli TEM/KMO yerine ücretsiz ana yolu şekillendirmek için "via" olarak kullanılır.
+  var FREE_D100_ANKARA_IST = [
+    {lat:40.9970,lon:28.7930,n:'İstanbul E5'},
+    {lat:40.9920,lon:29.0310,n:'Kadıköy D100'},
+    {lat:40.9000,lon:29.2500,n:'Pendik D100'},
+    {lat:40.8020,lon:29.4310,n:'Gebze D100'},
+    {lat:40.7660,lon:29.9160,n:'İzmit D100'},
+    {lat:40.7670,lon:30.4000,n:'Sakarya D100'},
+    {lat:40.7930,lon:30.7460,n:'Hendek D100'},
+    {lat:40.8420,lon:31.1570,n:'Düzce D100'},
+    {lat:40.7790,lon:31.3170,n:'Kaynaşlı D100'},
+    {lat:40.7350,lon:31.6060,n:'Bolu D100'},
+    {lat:40.8010,lon:32.1990,n:'Gerede D100'},
+    {lat:40.4700,lon:32.6520,n:'Kızılcahamam D750'},
+    {lat:40.2050,lon:32.6900,n:'Kazan D750'},
+    {lat:39.9334,lon:32.8597,n:'Ankara'}
+  ];
+
+  function nearestIndex(corr,p){
+    var best=0,bd=1e9;
+    for(var i=0;i<corr.length;i++){
+      var d=km(p.lat,p.lon,corr[i].lat,corr[i].lon);
+      if(d<bd){bd=d;best=i}
+    }
+    return {index:best,distance:bd};
+  }
+
+  function lineProgress(a,b,p){
+    var lat0=((a.lat+b.lat)/2)*Math.PI/180;
+    var ax=a.lon*Math.cos(lat0), ay=a.lat;
+    var bx=b.lon*Math.cos(lat0), by=b.lat;
+    var px=p.lon*Math.cos(lat0), py=p.lat;
+    var vx=bx-ax, vy=by-ay, wx=px-ax, wy=py-ay;
+    var den=vx*vx+vy*vy || 1;
+    return (wx*vx+wy*vy)/den;
+  }
+
+  function sampleList(list,maxCount){
+    if(list.length<=maxCount)return list;
+    var out=[];
+    for(var i=0;i<maxCount;i++){
+      var idx=Math.round(i*(list.length-1)/(maxCount-1));
+      if(out.indexOf(list[idx])<0)out.push(list[idx]);
+    }
+    return out;
+  }
+
+  function freeRoadWaypoints(start,dest,maxCount){
+    maxCount=maxCount||6;
+    if(!inTurkey(start)||!inTurkey(dest))return [];
+    var ns=nearestIndex(FREE_D100_ANKARA_IST,start);
+    var nd=nearestIndex(FREE_D100_ANKARA_IST,dest);
+
+    // Bu düzeltme öncelikle İstanbul-Kocaeli-Sakarya-Düzce-Bolu-Ankara hattında çalışır.
+    // Hat çok uzaksa sistemi bozma, sadece Google avoid=tolls ile devam et.
+    if(ns.distance>90 || nd.distance>90)return [];
+
+    var dir=nd.index>=ns.index?1:-1;
+    var pts=[];
+    for(var i=ns.index+dir;i!==nd.index;i+=dir){
+      if(i<0||i>=FREE_D100_ANKARA_IST.length)break;
+      var p=FREE_D100_ANKARA_IST[i];
+      var prog=lineProgress(start,dest,p);
+      if(prog>0.02 && prog<0.98)pts.push(p);
+    }
+    // Hedef/başlangıç çok yakınsa en yakın ücretsiz ana yol noktasını da ekle.
+    if(!pts.length && Math.abs(nd.index-ns.index)>=1){
+      var mid=FREE_D100_ANKARA_IST[Math.round((ns.index+nd.index)/2)];
+      if(mid && lineProgress(start,dest,mid)>0.02 && lineProgress(start,dest,mid)<0.98)pts.push(mid);
+    }
+    return sampleList(pts,maxCount);
+  }
+  window.mvFreeRoadWaypoints0647=freeRoadWaypoints;
+
+  function buildFreeOsrmUrl(url){
+    try{
+      var u=new URL(url,location.href);
+      if(u.hostname.indexOf('router.project-osrm.org')===-1)return null;
+      var key='/route/v1/driving/';
+      var pos=u.pathname.indexOf(key);
+      if(pos<0)return null;
+      var coordPart=u.pathname.slice(pos+key.length);
+      var coords=coordPart.split(';').map(parseLonLat).filter(Boolean);
+      if(coords.length!==2)return null;
+      var start=coords[0], dest=coords[1];
+      var vias=freeRoadWaypoints(start,dest,6);
+      if(!vias.length)return null;
+      var all=[start].concat(vias).concat([dest]).map(fmtLonLat).join(';');
+      u.pathname=key+all;
+      u.searchParams.set('overview','full');
+      u.searchParams.set('geometries','geojson');
+      u.searchParams.set('steps','false');
+      u.searchParams.set('alternatives','false');
+      u.searchParams.set('continue_straight','false');
+      return u.toString();
+    }catch(e){return null}
+  }
+
+  if(originalFetch && !window.__mvFetchFreeToll0647){
+    window.__mvFetchFreeToll0647=true;
+    window.fetch=function(input,init){
+      try{
+        var url=typeof input==='string'?input:(input&&input.url?input.url:String(input||''));
+        if(isFree() && url.indexOf('router.project-osrm.org/route/v1/driving')>-1){
+          var freeUrl=buildFreeOsrmUrl(url);
+          if(freeUrl && freeUrl!==url){
+            return originalFetch(freeUrl,init).then(function(res){
+              if(res && res.ok)return res;
+              return originalFetch(input,init);
+            }).catch(function(){return originalFetch(input,init)});
+          }
+        }
+      }catch(e){}
+      return originalFetch(input,init);
+    };
+  }
+
+  function isGoogleDirUrl(u){
+    try{
+      var x=new URL(u,location.href);
+      return (x.hostname.indexOf('google.')>-1 || x.hostname.indexOf('maps.google.')>-1) && x.href.indexOf('/maps/dir')>-1;
+    }catch(e){return String(u||'').indexOf('google.com/maps/dir')>-1}
+  }
+
+  function mergeWaypoints(origin,dest,existing){
+    var via=freeRoadWaypoints(origin,dest,6).map(function(p){return {lat:p.lat,lon:p.lon,kind:'free'}});
+    existing=(existing||[]).map(function(p){return {lat:p.lat,lon:p.lon,kind:'stop'}});
+    var all=[], seen={};
+    via.concat(existing).forEach(function(p){
+      if(!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lon)))return;
+      var k=Number(p.lat).toFixed(3)+','+Number(p.lon).toFixed(3);
+      if(seen[k])return;
+      seen[k]=1;
+      p.progress=lineProgress(origin,dest,p);
+      if(p.progress>0.01&&p.progress<0.99)all.push(p);
+    });
+    all.sort(function(a,b){return a.progress-b.progress});
+
+    // Google Maps URL'de waypoint sınırına takılmamak için şarj duraklarına öncelik ver.
+    var max=8;
+    if(all.length<=max)return all;
+    var stops=all.filter(function(p){return p.kind==='stop'});
+    var frees=all.filter(function(p){return p.kind!=='stop'});
+    if(stops.length>=max)return stops.slice(0,max).sort(function(a,b){return a.progress-b.progress});
+    var room=max-stops.length;
+    frees=sampleList(frees,room);
+    return stops.concat(frees).sort(function(a,b){return a.progress-b.progress});
+  }
+
+  function applyFreeGoogleUrl(url){
+    if(!url||url==='#')return url||'#';
+    try{
+      var u=new URL(url,location.href);
+      if(!isGoogleDirUrl(u.href))return url;
+      if(isFree()){
+        u.searchParams.set('avoid','tolls');
+        u.searchParams.set('dir_action','navigate');
+
+        var origin=parseLatLon(u.searchParams.get('origin')||'');
+        var dest=parseLatLon(u.searchParams.get('destination')||'');
+        if(origin && dest){
+          var rawWp=u.searchParams.get('waypoints')||'';
+          var existing=rawWp?rawWp.split('|').map(parseLatLon).filter(Boolean):[];
+          var merged=mergeWaypoints(origin,dest,existing);
+          if(merged.length){
+            u.searchParams.set('waypoints',merged.map(fmtLatLon).join('|'));
+          }
+        }
+      }else{
+        if(u.searchParams.get('avoid')==='tolls')u.searchParams.delete('avoid');
+      }
+      return u.toString();
+    }catch(e){
+      if(isFree() && String(url).indexOf('google.com/maps/dir')>-1 && String(url).indexOf('avoid=tolls')===-1){
+        return String(url)+(String(url).indexOf('?')>-1?'&':'?')+'avoid=tolls&dir_action=navigate';
+      }
+      return url;
+    }
+  }
+  window.mvApplyFreeGoogleUrl0647=applyFreeGoogleUrl;
+
+  var oldApply=window.mvApplyTollAvoidToMapsUrl0644;
+  window.mvApplyTollAvoidToMapsUrl0644=function(url){
+    var base=url;
+    try{base=oldApply?oldApply(url):url}catch(e){base=url}
+    return applyFreeGoogleUrl(base);
+  };
+
+  function patchLinks(){
+    var roots=[document.getElementById('routeResult'),document.getElementById('routeStationsMapModal0644'),document.getElementById('routeStationsMapModalFresh0643'),document.body];
+    roots.forEach(function(root){
+      if(!root)return;
+      root.querySelectorAll('a[href]').forEach(function(a){
+        var href=a.getAttribute('href')||'';
+        if(isGoogleDirUrl(href))a.setAttribute('href',applyFreeGoogleUrl(href));
+      });
+    });
+    var out=q('routeResult');
+    if(out && isFree() && out.querySelector('.routeDirectCard') && !q('routeTollFreeRealNote0647')){
+      var note=document.createElement('div');
+      note.id='routeTollFreeRealNote0647';
+      note.className='routeTollResultNote freeStrong';
+      note.innerHTML='<b>Ücretsiz geçiş aktif:</b> Rota çizgisi ve Google Haritalar linki D100 / E5 / D750 ücretsiz ana yol koridoruna göre hazırlandı. Google Haritalar açılınca “Ücretli yollardan kaçın” seçeneği de otomatik gelir.';
+      var card=out.querySelector('.routeDirectCard');
+      if(card){
+        var p=card.querySelector('p');
+        if(p)p.insertAdjacentElement('afterend',note); else card.insertBefore(note,card.firstChild);
+      }
+    }
+  }
+  window.mvPatchFreeTollLinks0647=patchLinks;
+
+  document.addEventListener('click',function(e){
+    try{
+      var a=e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if(a && isFree() && isGoogleDirUrl(a.getAttribute('href')||'')){
+        a.setAttribute('href',applyFreeGoogleUrl(a.getAttribute('href')));
+      }
+    }catch(err){}
+  },true);
+
+  var oldSet0644=window.mvSetTollMode0644;
+  if(typeof oldSet0644==='function' && !oldSet0644.__mvFreeReal0647){
+    window.mvSetTollMode0644=function(m,replan){
+      var r=oldSet0644.apply(this,arguments);
+      if(String(m)==='free'){
+        toast('Ücretsiz güzergâh hazırlanıyor…');
+      }
+      setTimeout(patchLinks,80);
+      setTimeout(patchLinks,600);
+      return r;
+    };
+    window.mvSetTollMode0644.__mvFreeReal0647=true;
+  }
+
+  var oldSet0646=window.mvSetTollMode0646;
+  if(typeof oldSet0646==='function' && !oldSet0646.__mvFreeReal0647){
+    window.mvSetTollMode0646=function(m,replan){
+      var r=oldSet0646.apply(this,arguments);
+      setTimeout(patchLinks,80);
+      setTimeout(patchLinks,600);
+      return r;
+    };
+    window.mvSetTollMode0646.__mvFreeReal0647=true;
+  }
+
+  var oldPlan=window.planEvRoute;
+  if(typeof oldPlan==='function' && !oldPlan.__mvFreeReal0647){
+    window.planEvRoute=function(){
+      if(isFree()){
+        try{
+          var sel=q('rp_route_choice');
+          // 0644 eski kodu alternatif 1'i seçmeye çalışıyor; 0647 ücretsiz modda OSRM rotasını zaten
+          // ücretsiz koridorla şekillendirdiği için tek/doğru rota seçili kalsın.
+          if(sel && sel.options && sel.options.length===1)sel.value='0';
+        }catch(e){}
+      }
+      var ret=oldPlan.apply(this,arguments);
+      return Promise.resolve(ret).then(function(v){
+        setTimeout(patchLinks,20);
+        setTimeout(patchLinks,250);
+        setTimeout(patchLinks,900);
+        return v;
+      },function(e){
+        setTimeout(patchLinks,120);
+        throw e;
+      });
+    };
+    window.planEvRoute.__mvFreeReal0647=true;
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(patchLinks,300)});
+  window.addEventListener('load',function(){setTimeout(patchLinks,500)});
+  setInterval(function(){
+    var route=q('tab-route');
+    if(route && String(route.className||'').indexOf('active')>-1)patchLinks();
+  },2500);
 })();
 </script>
 
