@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<!-- UFUK_ROUTE_MAP_FRESH_CONTAINER_LEAFLET_FIX_0643 -->
 <!-- UFUK_SPONSOR_PACKAGE_PRICE_AND_OFFER_COUNT_FIX_0625 -->
 <!-- UFUK_SPONSOR_CARI_PACKAGES_0624 -->
 <!-- UFUK_ADMIN_EMERGENCY_FLASH_HIDE_0620 -->
@@ -5212,6 +5213,117 @@ window.addEventListener('load',()=>{
 <script>
 window.addEventListener('load',function(){try{document.documentElement.classList.add('mv-boot-ready')}catch(e){}},{once:true});
 setTimeout(function(){try{document.documentElement.classList.add('mv-boot-ready')}catch(e){}},900);
+</script>
+
+
+<script>
+/* UFUK_ROUTE_MAP_FRESH_CONTAINER_LEAFLET_FIX_0643
+   Toplu rota istasyon haritası için her açılışta yeni Leaflet container oluşturur.
+   L yoksa Leaflet'i dinamik yükler; eski _leaflet_id çakışmasını tamamen engeller.
+*/
+(function(){
+  function escHtml(t){return String(t??'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+  function n(v,d){var x=Number(v);return Number.isFinite(x)?x:d}
+  function routeTargetUrl(dest,stops){
+    try{
+      var origin=(window.userPos&&Number.isFinite(Number(userPos.lat)))?(userPos.lat+','+userPos.lon):'';
+      var destination=(dest&&Number.isFinite(Number(dest.lat)))?(dest.lat+','+dest.lon):'';
+      var url='https://www.google.com/maps/dir/?api=1&travelmode=driving';
+      if(origin)url+='&origin='+encodeURIComponent(origin);
+      if(destination)url+='&destination='+encodeURIComponent(destination);
+      return url;
+    }catch(_){return '#'}
+  }
+  function loadLeaflet(){
+    if(window.L&&L.map)return Promise.resolve();
+    if(window.__mvLeafletPromise)return window.__mvLeafletPromise;
+    window.__mvLeafletPromise=new Promise(function(resolve,reject){
+      try{
+        if(!document.querySelector('link[data-mv-leaflet]')){
+          var css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';css.setAttribute('data-mv-leaflet','1');document.head.appendChild(css);
+        }
+        var s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.async=true;
+        s.onload=function(){resolve()};s.onerror=function(){reject(new Error('Leaflet yüklenemedi'))};document.head.appendChild(s);
+      }catch(e){reject(e)}
+    });
+    return window.__mvLeafletPromise;
+  }
+  function ensureModal(){
+    var modal=document.getElementById('routeStationsMapModalFresh0643');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='routeStationsMapModalFresh0643';
+    modal.style.cssText='position:fixed;inset:0;z-index:250000;background:rgba(0,0,0,.72);display:none;align-items:flex-end;';
+    modal.innerHTML='<div style="width:100%;max-width:430px;margin:0 auto;background:#07111d;border:1px solid rgba(255,255,255,.12);border-bottom:0;border-radius:28px 28px 0 0;padding:16px;max-height:92vh;overflow:auto;box-shadow:0 -18px 50px rgba(0,0,0,.45)">'+
+      '<button id="routeStationsMapClose0643" style="float:right;width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:24px;font-weight:900">×</button>'+ 
+      '<h2 style="margin:8px 54px 6px 0;font-size:27px;line-height:1.15;color:#edf5ff">Gidiş güzergâhındaki bütün istasyonlar</h2>'+ 
+      '<p id="routeStationsMapText0643" style="margin:0 0 12px;color:#91a8bf;line-height:1.35"></p>'+ 
+      '<div id="routeStationsMapHost0643" style="height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>'+ 
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button id="routeStationsMapClose2_0643" style="border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#edf5ff;border-radius:999px;padding:13px;font-weight:900">Kapat</button><a id="routeStationsMapTarget0643" href="#" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;border-radius:999px;padding:13px;font-weight:900;background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112">Hedef rotasını aç</a></div>'+ 
+      '</div>';
+    document.body.appendChild(modal);
+    function close(){
+      modal.style.display='none';
+      try{if(window.mvRouteStationsMap0643){window.mvRouteStationsMap0643.remove();window.mvRouteStationsMap0643=null}}catch(_){ }
+      var host=document.getElementById('routeStationsMapHost0643'); if(host)host.innerHTML='';
+    }
+    document.getElementById('routeStationsMapClose0643').onclick=close;
+    document.getElementById('routeStationsMapClose2_0643').onclick=close;
+    modal.addEventListener('click',function(e){if(e.target===modal)close()});
+    return modal;
+  }
+  window.mvRouteMapPickIndex0643=function(i){
+    try{
+      var s=(window.__mvRouteMapList0643||[])[Number(i)];
+      if(!s)return;
+      if(typeof window.mvSelectRouteStop==='function')window.mvSelectRouteStop(String(s.id||''));
+      var m=document.getElementById('routeStationsMapModalFresh0643'); if(m)m.style.display='none';
+      if(typeof routeToast==='function')routeToast('Seçilen istasyona göre rota yenileniyor…');
+    }catch(e){console.error(e)}
+  };
+  window.mvShowRouteStationsMap=function(){
+    var list=(window.mvLastRouteStationList||[]).filter(function(s){return s&&Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lon))});
+    var dest=window.mvLastRouteDest||null;
+    var points=Array.isArray(window.mvLastRoutePoints)?window.mvLastRoutePoints:[];
+    if(!list.length){try{if(typeof routeToast==='function')routeToast('Bu güzergâhta gösterilecek istasyon bulunamadı.')}catch(_){} return;}
+    window.__mvRouteMapList0643=list;
+    var modal=ensureModal();
+    var text=document.getElementById('routeStationsMapText0643'); if(text)text.textContent=list.length+' istasyon · Seçilen gidiş güzergâhına göre listelendi';
+    var target=document.getElementById('routeStationsMapTarget0643'); if(target)target.href=routeTargetUrl(dest,[]);
+    var host=document.getElementById('routeStationsMapHost0643');
+    if(host)host.innerHTML='<div style="padding:18px;color:#91a8bf">Harita yükleniyor…</div>';
+    modal.style.display='flex';
+    setTimeout(function(){
+      loadLeaflet().then(function(){
+        var host=document.getElementById('routeStationsMapHost0643'); if(!host)return;
+        try{if(window.mvRouteStationsMap0643){window.mvRouteStationsMap0643.remove();window.mvRouteStationsMap0643=null}}catch(_){ }
+        var mapId='routeStationsMapInner_'+Date.now();
+        host.innerHTML='<div id="'+mapId+'" style="height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>';
+        var el=document.getElementById(mapId);
+        var map=L.map(el,{zoomControl:true,tap:false,dragging:true,touchZoom:true,doubleClickZoom:true,scrollWheelZoom:true});
+        window.mvRouteStationsMap0643=map;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(map);
+        var bounds=[];
+        if(points.length>1){
+          var step=Math.max(1,Math.ceil(points.length/600));
+          var latlngs=[];
+          for(var pi=0;pi<points.length;pi+=step){var p=points[pi];var la=Number(p.lat),lo=Number(p.lon);if(Number.isFinite(la)&&Number.isFinite(lo))latlngs.push([la,lo]);}
+          if(latlngs.length){L.polyline(latlngs,{weight:5,opacity:.75}).addTo(map);bounds=bounds.concat(latlngs);}
+        }
+        try{if(window.userPos&&Number.isFinite(Number(userPos.lat))&&Number.isFinite(Number(userPos.lon))){var here=[Number(userPos.lat),Number(userPos.lon)];L.circleMarker(here,{radius:8,weight:3}).addTo(map).bindPopup('<b>Mevcut konum</b>');bounds.push(here);}}catch(_){ }
+        if(dest&&Number.isFinite(Number(dest.lat))&&Number.isFinite(Number(dest.lon))){var end=[Number(dest.lat),Number(dest.lon)];L.marker(end).addTo(map).bindPopup('<b>Hedef</b><br>'+escHtml(dest.name||''));bounds.push(end);}
+        list.forEach(function(s,idx){
+          var ll=[Number(s.lat),Number(s.lon)]; if(!Number.isFinite(ll[0])||!Number.isFinite(ll[1]))return; bounds.push(ll);
+          var kmTo=Number(s.alongKm||0);
+          var pop='<b>'+(idx+1)+'. '+escHtml(s.name||'İstasyon')+'</b><br>'+escHtml(s.brand||'')+' · '+escHtml(s.power||'kW bilgisi yok')+'<br>Güzergâhta yaklaşık: '+Math.round(kmTo)+' km sonra<br>Sapma: '+Number(s.routeDeviation||0).toFixed(1)+' km<br><button style="margin-top:7px;border:0;border-radius:10px;padding:8px 11px;font-weight:900;background:#35ef8d;color:#052112" onclick="mvRouteMapPickIndex0643('+idx+')">Bu istasyonu seç</button>';
+          L.marker(ll).addTo(map).bindPopup(pop);
+        });
+        if(bounds.length){map.fitBounds(bounds,{padding:[28,28],maxZoom:13});}else{map.setView([40.84,31.15],9)}
+        setTimeout(function(){try{map.invalidateSize()}catch(_){}},180);
+      }).catch(function(err){console.error(err);var host=document.getElementById('routeStationsMapHost0643');if(host)host.innerHTML='<div class="empty" style="margin:14px">Harita yüklenemedi. İnternet bağlantını kontrol edip tekrar dene.</div>';});
+    },180);
+  };
+})();
 </script>
 
 </body>
