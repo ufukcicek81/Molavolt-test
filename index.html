@@ -780,6 +780,21 @@ html.mv-admin-start .adminOnly{
   line-height:1.35;
 }
 
+
+
+/* UFUK_TOLL_FREE_ROUTE_AND_MAP_FIX_0644 */
+.routeTollBox{margin-top:10px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);border-radius:18px;padding:12px}
+.routeTollBox>label{display:block;color:var(--muted);font-size:12px;margin:0 0 7px!important}
+.routeTollChoice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.routeTollChoice button{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);color:#eaf4ff;border-radius:15px;padding:12px 10px;font-weight:900;font-size:13px;line-height:1.15}
+.routeTollChoice button.active{background:linear-gradient(135deg,#35ef8d,#12c873);border-color:transparent;color:#052112;box-shadow:0 10px 24px rgba(53,239,141,.16)}
+.routeTollHint{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.35}
+.routeTollResultNote{border:1px solid rgba(57,170,255,.22);background:rgba(57,170,255,.075);color:#dff2ff;border-radius:16px;padding:10px;margin:10px 0;font-size:12px;line-height:1.35}
+.mvRouteMapListFallback{max-height:52vh;overflow:auto;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:rgba(255,255,255,.03);padding:8px}
+.mvRouteMapListFallback .item{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 6px;color:#dcecff;line-height:1.35;font-size:13px}
+.mvRouteMapListFallback .item:last-child{border-bottom:0}
+.mvRouteMapListFallback a,.mvRouteMapListFallback button{display:inline-block;margin-top:7px;margin-right:6px;border:0;border-radius:11px;padding:8px 10px;font-weight:900;text-decoration:none;background:#35ef8d;color:#052112}
+@media(max-width:370px){.routeTollChoice{grid-template-columns:1fr}.routeTollChoice button{font-size:14px}}
 </style>
 <script>
 /* UFUK_REFRESH_NO_FLASH_ROUTE_FAST_0633: yenilemede yanlış/admin ekranı parlamasını engeller */
@@ -843,6 +858,16 @@ html.mv-admin-start .adminOnly{
               <label>Net açık adres <span class="muted">(isteğe bağlı)</span></label>
               <textarea id="rp_full_address" placeholder="Örn: Viaport Marina, Cami Mahallesi, Balıkçılar Sokak No:20, Tuzla / İstanbul" autocomplete="street-address" oninput="mvFullAddressTyping0638()"></textarea>
               <div class="addrHint">Bu alan doluysa rota hesabında il/ilçe yerine bu açık adres hedef alınır.</div>
+            </div>
+
+
+            <div class="routeTollBox" id="rp_toll_box">
+              <label>Geçiş tercihi</label>
+              <div class="routeTollChoice">
+                <button type="button" id="rp_toll_paid" data-toll-mode="paid" onclick="mvSetTollMode0644('paid', true)">Ücretli geçiş kullan</button>
+                <button type="button" id="rp_toll_free" data-toll-mode="free" onclick="mvSetTollMode0644('free', true)">Ücretsiz geçiş</button>
+              </div>
+              <div class="routeTollHint" id="rp_toll_hint">Ücretsiz seçilirse rota Google Haritalar’da ücretli yollardan kaçınarak açılır.</div>
             </div>
 
             <div class="routeQuickGrid">
@@ -5323,6 +5348,266 @@ setTimeout(function(){try{document.documentElement.classList.add('mv-boot-ready'
       }).catch(function(err){console.error(err);var host=document.getElementById('routeStationsMapHost0643');if(host)host.innerHTML='<div class="empty" style="margin:14px">Harita yüklenemedi. İnternet bağlantını kontrol edip tekrar dene.</div>';});
     },180);
   };
+})();
+</script>
+
+
+
+<script>
+/* UFUK_TOLL_FREE_ROUTE_AND_MAP_FIX_0644
+   - Rota ekranına ücretli / ücretsiz geçiş seçimi ekler.
+   - Ücretsiz seçildiğinde Google Haritalar linklerine avoid=tolls ekler.
+   - Ücretsiz modda, OSRM alternatif rota varsa 2. güzergâhı seçerek istasyon filtresini de alternatif hatta yaklaştırır.
+   - Toplu istasyon haritasını çoklu Leaflet CDN + fallback liste ile yeniden açar; boş harita yerine güvenli çıktı verir.
+*/
+(function(){
+  var KEY='mv_route_toll_mode_0644';
+  function q(id){return document.getElementById(id)}
+  function txt(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+  function num(v,d){var x=Number(String(v==null?'':v).replace(',','.'));return Number.isFinite(x)?x:d}
+  function mode(){try{return localStorage.getItem(KEY)==='free'?'free':'paid'}catch(e){return 'paid'}}
+  function toast(m){try{if(typeof routeToast==='function')routeToast(m)}catch(e){}}
+  function isRouteVisible(){var t=q('tab-route');return !!(t&&String(t.className||'').indexOf('active')>-1)}
+  function sync(){
+    var m=mode(), paid=q('rp_toll_paid'), free=q('rp_toll_free'), hint=q('rp_toll_hint');
+    if(paid)paid.classList.toggle('active',m==='paid');
+    if(free)free.classList.toggle('active',m==='free');
+    if(hint)hint.textContent=m==='free'
+      ? 'Ücretsiz geçiş seçildi: Google Haritalar ücretli yollardan kaçınarak açılır. Alternatif güzergâh varsa MolaVolt onu kullanır.'
+      : 'Ücretli geçiş seçildi: hızlı/önerilen güzergâh ve ücretli yollar serbest.';
+  }
+  function ensureTollBox(){
+    if(!q('rp_toll_box')){
+      var anchor=document.querySelector('.routeFullAddressBox') || q('routeAdvanced');
+      if(anchor&&anchor.parentNode){
+        var div=document.createElement('div');
+        div.className='routeTollBox';
+        div.id='rp_toll_box';
+        div.innerHTML='<label>Geçiş tercihi</label><div class="routeTollChoice"><button type="button" id="rp_toll_paid" data-toll-mode="paid">Ücretli geçiş kullan</button><button type="button" id="rp_toll_free" data-toll-mode="free">Ücretsiz geçiş</button></div><div class="routeTollHint" id="rp_toll_hint">Ücretsiz seçilirse rota Google Haritalar’da ücretli yollardan kaçınarak açılır.</div>';
+        anchor.insertAdjacentElement('afterend',div);
+      }
+    }
+    var paid=q('rp_toll_paid'), free=q('rp_toll_free');
+    if(paid&&!paid.__mv0644){paid.__mv0644=1;paid.addEventListener('click',function(){window.mvSetTollMode0644('paid',true)})}
+    if(free&&!free.__mv0644){free.__mv0644=1;free.addEventListener('click',function(){window.mvSetTollMode0644('free',true)})}
+    sync();
+  }
+  window.mvGetTollMode0644=mode;
+  window.mvApplyTollAvoidToMapsUrl0644=function(url){
+    if(!url||url==='#')return url||'#';
+    try{
+      var u=new URL(url,location.href);
+      var isMaps=(u.hostname.indexOf('google.')>-1||u.hostname.indexOf('goo.gl')>-1) && u.href.indexOf('/maps/dir')>-1;
+      if(isMaps){
+        if(mode()==='free')u.searchParams.set('avoid','tolls');
+        else if(u.searchParams.get('avoid')==='tolls')u.searchParams.delete('avoid');
+      }
+      return u.toString();
+    }catch(e){
+      if(mode()==='free' && String(url).indexOf('google.com/maps/dir')>-1 && String(url).indexOf('avoid=tolls')===-1){
+        return String(url)+(String(url).indexOf('?')>-1?'&':'?')+'avoid=tolls';
+      }
+      return url;
+    }
+  };
+  window.mvSetTollMode0644=function(m,replan){
+    m=m==='free'?'free':'paid';
+    try{localStorage.setItem(KEY,m)}catch(e){}
+    sync();
+    if(m==='paid'){
+      window.mvSelectedRouteOption=0;
+      try{sessionStorage.setItem('mv_selected_route_option_0636','0')}catch(e){}
+      var s0=q('rp_route_choice'); if(s0&&s0.options&&s0.options.length)s0.value='0';
+    }else{
+      // OSRM ücretsiz yol filtresi sunmuyor. Bu yüzden varsa alternatif güzergâhı öne alıyoruz;
+      // asıl navigasyonda Google Maps avoid=tolls kesin uygulanıyor.
+      if(!window.mvSelectedRouteOption || Number(window.mvSelectedRouteOption)===0)window.mvSelectedRouteOption=1;
+      try{sessionStorage.setItem('mv_selected_route_option_0636',String(window.mvSelectedRouteOption||1))}catch(e){}
+      var s=q('rp_route_choice'); if(s&&s.options&&s.options.length>1&&(!s.value||s.value==='0'))s.value=String(Math.min(1,s.options.length-1));
+    }
+    if(replan){
+      toast(m==='free'?'Ücretsiz geçişe göre rota hesaplanıyor…':'Ücretli geçişe göre rota hesaplanıyor…');
+      var out=q('routeResult');
+      if(typeof window.planEvRoute==='function' && (isRouteVisible() || (out&&out.innerHTML.trim()))){setTimeout(function(){window.planEvRoute()},80)}
+    }
+  };
+  function beforePlan(){
+    ensureTollBox();
+    if(mode()==='free'){
+      if(!window.mvSelectedRouteOption || Number(window.mvSelectedRouteOption)===0)window.mvSelectedRouteOption=1;
+      try{sessionStorage.setItem('mv_selected_route_option_0636',String(window.mvSelectedRouteOption||1))}catch(e){}
+      var s=q('rp_route_choice'); if(s&&s.options&&s.options.length>1&&(!s.value||s.value==='0'))s.value=String(Math.min(1,s.options.length-1));
+    }else{
+      window.mvSelectedRouteOption=0;
+      try{sessionStorage.setItem('mv_selected_route_option_0636','0')}catch(e){}
+      var sp=q('rp_route_choice'); if(sp&&sp.options&&sp.options.length)sp.value='0';
+    }
+  }
+  function patchRouteLinks(){
+    var out=q('routeResult'); if(!out)return;
+    out.querySelectorAll('a[href]').forEach(function(a){
+      var href=a.getAttribute('href')||'';
+      if(href.indexOf('google.com/maps/dir')>-1 || href.indexOf('www.google.com/maps/dir')>-1){a.setAttribute('href',window.mvApplyTollAvoidToMapsUrl0644(href));}
+    });
+    var first=out.querySelector('a[href*="google"][href*="/maps/dir"]');
+    out.querySelectorAll('button').forEach(function(b){
+      if((b.textContent||'').toLowerCase().indexOf('linki kopyala')>-1){
+        b.onclick=function(){
+          var url=first?first.href:'';
+          url=window.mvApplyTollAvoidToMapsUrl0644(url);
+          if(navigator.clipboard&&url)navigator.clipboard.writeText(url);
+          toast('Rota linki kopyalandı');
+        };
+      }
+    });
+    if(out.querySelector('.routeDirectCard')&&!q('routeTollResultNote0644')){
+      var note=document.createElement('div');
+      note.id='routeTollResultNote0644';
+      note.className='routeTollResultNote';
+      note.innerHTML=mode()==='free'
+        ? '<b>Geçiş tercihi:</b> Ücretsiz geçiş. Haritalar linki ücretli yollardan kaçınacak şekilde hazırlandı.'
+        : '<b>Geçiş tercihi:</b> Ücretli geçiş serbest. Hızlı/önerilen güzergâh kullanılıyor.';
+      var card=out.querySelector('.routeDirectCard');
+      var after=card.querySelector('p');
+      if(after)after.insertAdjacentElement('afterend',note); else card.insertBefore(note,card.firstChild);
+    }
+  }
+  var oldPlan=window.planEvRoute;
+  if(typeof oldPlan==='function' && !oldPlan.__mvTollWrapped0644){
+    var wrapped=function(){
+      beforePlan();
+      var ret=oldPlan.apply(this,arguments);
+      return Promise.resolve(ret).then(function(v){setTimeout(patchRouteLinks,40);setTimeout(patchRouteLinks,350);return v},function(e){setTimeout(patchRouteLinks,80);throw e});
+    };
+    wrapped.__mvTollWrapped0644=true;
+    window.planEvRoute=wrapped;
+  }
+  var oldRouteUrl=window.routeUrl;
+  if(typeof oldRouteUrl==='function' && !oldRouteUrl.__mvTollWrapped0644){
+    window.routeUrl=function(s){return window.mvApplyTollAvoidToMapsUrl0644(oldRouteUrl.call(this,s))};
+    window.routeUrl.__mvTollWrapped0644=true;
+  }
+
+  function googleRouteUrl(dest,stops){
+    try{
+      var origin=(window.userPos&&Number.isFinite(Number(userPos.lat)))?(userPos.lat+','+userPos.lon):'';
+      var destination=(dest&&Number.isFinite(Number(dest.lat)))?(dest.lat+','+dest.lon):'';
+      var url='https://www.google.com/maps/dir/?api=1&travelmode=driving';
+      if(origin)url+='&origin='+encodeURIComponent(origin);
+      if(destination)url+='&destination='+encodeURIComponent(destination);
+      var wp=(stops||[]).slice(0,8).filter(function(s){return Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lon))}).map(function(s){return s.lat+','+s.lon}).join('|');
+      if(wp)url+='&waypoints='+encodeURIComponent(wp);
+      return window.mvApplyTollAvoidToMapsUrl0644(url);
+    }catch(e){return '#'}
+  }
+  function loadCssOnce(href){
+    if(document.querySelector('link[href="'+href+'"]'))return;
+    var l=document.createElement('link');l.rel='stylesheet';l.href=href;l.setAttribute('data-mv-leaflet-0644','1');document.head.appendChild(l);
+  }
+  function loadScript(src,ms){
+    return new Promise(function(resolve,reject){
+      if(window.L&&L.map){resolve();return;}
+      var done=false; var s=document.createElement('script'); s.src=src; s.async=true; s.crossOrigin='';
+      var t=setTimeout(function(){if(done)return;done=true;try{s.remove()}catch(e){} reject(new Error('timeout '+src));},ms||7000);
+      s.onload=function(){if(done)return;done=true;clearTimeout(t); if(window.L&&L.map)resolve(); else reject(new Error('Leaflet bulunamadı'))};
+      s.onerror=function(){if(done)return;done=true;clearTimeout(t);reject(new Error('script error '+src))};
+      document.head.appendChild(s);
+    });
+  }
+  function loadLeaflet(){
+    if(window.L&&L.map)return Promise.resolve();
+    var css=['https://unpkg.com/leaflet@1.9.4/dist/leaflet.css','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'];
+    css.forEach(function(h){try{loadCssOnce(h)}catch(e){}});
+    var sources=['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'];
+    var p=Promise.reject(new Error('start'));
+    sources.forEach(function(src){p=p.catch(function(){return loadScript(src,7500)})});
+    return p;
+  }
+  function ensureMapModal(){
+    var modal=q('routeStationsMapModal0644');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='routeStationsMapModal0644';
+    modal.style.cssText='position:fixed;inset:0;z-index:300000;background:rgba(0,0,0,.74);display:none;align-items:flex-end;';
+    modal.innerHTML='<div style="width:100%;max-width:430px;margin:0 auto;background:#07111d;border:1px solid rgba(255,255,255,.12);border-bottom:0;border-radius:28px 28px 0 0;padding:16px;max-height:94vh;overflow:auto;box-shadow:0 -18px 50px rgba(0,0,0,.45)">'+
+      '<button id="routeStationsMapClose0644" style="float:right;width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:24px;font-weight:900">×</button>'+ 
+      '<h2 style="margin:8px 54px 6px 0;font-size:27px;line-height:1.15;color:#edf5ff">Gidiş güzergâhındaki bütün istasyonlar</h2>'+ 
+      '<p id="routeStationsMapText0644" style="margin:0 0 12px;color:#91a8bf;line-height:1.35"></p>'+ 
+      '<div id="routeStationsMapHost0644" style="height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>'+ 
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button id="routeStationsMapClose2_0644" style="border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#edf5ff;border-radius:999px;padding:13px;font-weight:900">Kapat</button><a id="routeStationsMapTarget0644" href="#" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;border-radius:999px;padding:13px;font-weight:900;background:linear-gradient(135deg,#35ef8d,#12c873);color:#052112">Hedef rotasını aç</a></div>'+ 
+      '</div>';
+    document.body.appendChild(modal);
+    function close(){
+      modal.style.display='none';
+      try{if(window.mvRouteStationsMap0644){window.mvRouteStationsMap0644.remove();window.mvRouteStationsMap0644=null}}catch(e){}
+      var host=q('routeStationsMapHost0644'); if(host)host.innerHTML='';
+    }
+    q('routeStationsMapClose0644').onclick=close;
+    q('routeStationsMapClose2_0644').onclick=close;
+    modal.addEventListener('click',function(e){if(e.target===modal)close()});
+    return modal;
+  }
+  window.mvRouteMapPickIndex0644=function(i){
+    var s=(window.__mvRouteMapList0644||[])[Number(i)];
+    if(!s)return;
+    if(typeof window.mvSelectRouteStop==='function')window.mvSelectRouteStop(String(s.id||''));
+    var m=q('routeStationsMapModal0644'); if(m)m.style.display='none';
+    toast('Seçilen istasyona göre rota yenileniyor…');
+  };
+  function fallbackList(host,list,dest){
+    if(!host)return;
+    var html='<div class="mvRouteMapListFallback">'+list.slice(0,120).map(function(s,i){
+      var g='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.lat+','+s.lon);
+      return '<div class="item"><b>'+(i+1)+'. '+txt(s.name||'İstasyon')+'</b><br>'+txt(s.brand||'')+' · '+txt(s.power||'kW bilgisi yok')+'<br>Güzergâhta yaklaşık: '+Math.round(num(s.alongKm,0))+' km sonra · Sapma: '+num(s.routeDeviation,0).toFixed(1)+' km<br><a href="'+g+'" target="_blank" rel="noopener">Haritada aç</a><button onclick="mvRouteMapPickIndex0644('+i+')">Bu istasyonu seç</button></div>';
+    }).join('')+'</div>';
+    host.innerHTML=html;
+  }
+  window.mvShowRouteStationsMap=function(){
+    try{var old=q('routeStationsMapModal'); if(old)old.style.display='none'}catch(e){}
+    try{var old2=q('routeStationsMapModalFresh0643'); if(old2)old2.style.display='none'}catch(e){}
+    var list=(window.mvLastRouteStationList||[]).filter(function(s){return s&&Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lon))});
+    var dest=window.mvLastRouteDest||null;
+    var points=Array.isArray(window.mvLastRoutePoints)?window.mvLastRoutePoints:[];
+    if(!list.length){toast('Bu güzergâhta gösterilecek istasyon bulunamadı.');return;}
+    window.__mvRouteMapList0644=list;
+    var modal=ensureMapModal();
+    var textEl=q('routeStationsMapText0644');
+    if(textEl)textEl.textContent=list.length+' istasyon · '+(mode()==='free'?'Ücretsiz geçiş tercihine göre':'Ücretli geçiş tercihine göre')+' listelendi';
+    var target=q('routeStationsMapTarget0644'); if(target)target.href=googleRouteUrl(dest,[]);
+    var host=q('routeStationsMapHost0644'); if(host)host.innerHTML='<div style="padding:18px;color:#91a8bf">Harita yükleniyor…</div>';
+    modal.style.display='flex';
+    setTimeout(function(){
+      loadLeaflet().then(function(){
+        host=q('routeStationsMapHost0644'); if(!host)return;
+        try{if(window.mvRouteStationsMap0644){window.mvRouteStationsMap0644.remove();window.mvRouteStationsMap0644=null}}catch(e){}
+        var mapId='routeStationsMapInner0644_'+Date.now();
+        host.innerHTML='<div id="'+mapId+'" style="height:64vh;min-height:430px;width:100%;border-radius:22px;overflow:hidden;background:#101b2c"></div>';
+        var el=q(mapId);
+        var map=L.map(el,{zoomControl:true,tap:false,dragging:true,touchZoom:true,doubleClickZoom:true,scrollWheelZoom:true,preferCanvas:true});
+        window.mvRouteStationsMap0644=map;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OSM'}).addTo(map);
+        var bounds=[];
+        if(points.length>1){
+          var step=Math.max(1,Math.ceil(points.length/700));
+          var latlngs=[];
+          for(var pi=0;pi<points.length;pi+=step){var p=points[pi];var la=Number(p.lat),lo=Number(p.lon);if(Number.isFinite(la)&&Number.isFinite(lo))latlngs.push([la,lo]);}
+          if(latlngs.length){L.polyline(latlngs,{weight:5,opacity:.82}).addTo(map);bounds=bounds.concat(latlngs);}
+        }
+        if(window.userPos&&Number.isFinite(Number(userPos.lat))&&Number.isFinite(Number(userPos.lon))){var here=[Number(userPos.lat),Number(userPos.lon)];L.circleMarker(here,{radius:8,weight:3,fillOpacity:.9}).addTo(map).bindPopup('<b>Mevcut konum</b>');bounds.push(here);}
+        if(dest&&Number.isFinite(Number(dest.lat))&&Number.isFinite(Number(dest.lon))){var end=[Number(dest.lat),Number(dest.lon)];L.circleMarker(end,{radius:9,weight:3,fillOpacity:.9}).addTo(map).bindPopup('<b>Hedef</b><br>'+txt(dest.name||''));bounds.push(end);}
+        list.forEach(function(s,idx){
+          var ll=[Number(s.lat),Number(s.lon)]; if(!Number.isFinite(ll[0])||!Number.isFinite(ll[1]))return; bounds.push(ll);
+          var pop='<b>'+(idx+1)+'. '+txt(s.name||'İstasyon')+'</b><br>'+txt(s.brand||'')+' · '+txt(s.power||'kW bilgisi yok')+'<br>Güzergâhta yaklaşık: '+Math.round(num(s.alongKm,0))+' km sonra<br>Sapma: '+num(s.routeDeviation,0).toFixed(1)+' km<br><button style="margin-top:7px;border:0;border-radius:10px;padding:8px 11px;font-weight:900;background:#35ef8d;color:#052112" onclick="mvRouteMapPickIndex0644('+idx+')">Bu istasyonu seç</button>';
+          L.circleMarker(ll,{radius:6,weight:2,fillOpacity:.85}).addTo(map).bindPopup(pop);
+        });
+        if(bounds.length){map.fitBounds(bounds,{padding:[30,30],maxZoom:13});}else{map.setView([40.84,31.15],9)}
+        [70,250,700,1200].forEach(function(ms){setTimeout(function(){try{map.invalidateSize(true)}catch(e){}},ms)});
+      }).catch(function(err){console.error(err);fallbackList(q('routeStationsMapHost0644'),list,dest);});
+    },120);
+  };
+  document.addEventListener('DOMContentLoaded',function(){ensureTollBox();setTimeout(patchRouteLinks,250)});
+  window.addEventListener('load',function(){ensureTollBox();setTimeout(patchRouteLinks,500)});
+  setTimeout(function(){ensureTollBox();patchRouteLinks()},700);
 })();
 </script>
 
